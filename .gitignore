@@ -1,0 +1,4 @@
+# JetBrains Rider
+bin/
+obj/
+.idea/
