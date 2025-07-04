@@ -1,4 +1,6 @@
 # JetBrains Rider
+*.sln.DotSettings.user
+.idea/
 bin/
 obj/
-.idea/
+
