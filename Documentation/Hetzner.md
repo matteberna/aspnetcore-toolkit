@@ -100,6 +100,18 @@
   ```  
   This allocates a 2 GB swap file, restricts access, and sets the system to prefer RAM over swap.
 
+### Set Hostname
+
+- Set the machine's hostname to simplify logging and monitoring:
+  ```bash
+  hostnamectl set-hostname {{ProjectLabel}}-prod
+  ```
+- Edit the hosts file:
+  ```bash
+  nano /etc/hosts
+  ```
+  Update the `127.0.1.1` line to match `{{ProjectLabel}}-prod`
+
 ### Apply all updates
 
 - Patch the system:
