@@ -209,3 +209,59 @@
   fail2ban-client status sshd
   ```
   The SSH jail should be active and monitoring port 22.
+
+## SSH Hardening
+
+### Create the deploy user
+
+> **❓Why:** Using a different user for day-to-day operations reduces risk if credentials are compromised.
+>
+- Create the **deploy** user with a strong password:
+  ```bash
+  useradd -m -s /bin/bash deploy
+  usermod -aG sudo deploy
+  chage -m 0 -M 99999 deploy
+  passwd deploy
+  ```
+- Record the password in your secure vault.
+
+- Copy the pre-authorized SSH Keys and set permissions:
+  ```bash
+  mkdir -p /home/deploy/.ssh
+  cp /root/.ssh/authorized_keys /home/deploy/.ssh/
+  chown -R deploy:deploy /home/deploy/.ssh
+  chmod 700 /home/deploy/.ssh
+  chmod 600 /home/deploy/.ssh/authorized_keys
+  ```
+- In a new session, verify you can SSH in as **deploy**:
+  ```bash
+  ssh deploy@{{IpAddress}}
+  ```
+### Lock Down SSHD
+- Open the SSH daemon config:
+  ```bash
+  sudo nano /etc/ssh/sshd_config
+  ```
+  Ensure the following are uncommented and set exactly:
+  ```
+  PermitRootLogin no
+  PasswordAuthentication no
+  PermitEmptyPasswords no
+  ChallengeResponseAuthentication no
+  UsePAM yes
+  X11Forwarding no
+  ```
+* For scripting purposes, allow **deploy** to run `pg_dump` without a password prompt:
+  ```bash
+  sudo visudo -f /etc/sudoers.d/deploy
+  ```
+  Add only this line:
+  ```
+  deploy ALL=(postgres) NOPASSWD: /usr/bin/pg_dump
+  ```
+
+* Restart the SSH service:
+  ```bash
+  sudo systemctl restart ssh
+  ``` 
+- From a fresh session, ensure that you can SSH back in as **deploy** and that root login is disabled.
