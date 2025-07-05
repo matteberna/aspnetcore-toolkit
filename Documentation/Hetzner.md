@@ -184,7 +184,9 @@
   systemctl restart unattended-upgrades
   ```
 
-### Harden SSH with Fail2Ban
+## SSH Hardening
+
+### Configure Fail2Ban for SSH
 
 - Create a custom jail so that SSH failures lock out bad actors for an hour:
   ```bash
@@ -209,8 +211,6 @@
   fail2ban-client status sshd
   ```
   The SSH jail should be active and monitoring port 22.
-
-## SSH Hardening
 
 ### Create the deploy user
 
