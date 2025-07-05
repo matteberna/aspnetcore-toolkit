@@ -79,3 +79,119 @@
   IdentityFile ~/.ssh/hetzner_project_key
   ```
 -   Test the connection with `ssh {{ProjectLabel}}-prod`
+
+## Initial System Configuration
+
+### Create & Enable Swap
+
+> **❓Why:** Swap prevents out-of-memory errors under load, but Ubuntu VPSes often ship without it.
+
+- Run as root:
+  ```bash
+  fallocate -l 2G /swapfile
+  chmod 600 /swapfile
+  mkswap /swapfile
+  swapon /swapfile
+  echo '/swapfile none swap sw 0 0' >> /etc/fstab
+  echo 'vm.swappiness=10' >> /etc/sysctl.conf
+  sysctl -p
+  ```  
+  This allocates a 2 GB swap file, restricts access, and sets the system to prefer RAM over swap.
+
+### Apply all updates
+
+- Patch the system:
+  ```bash
+  apt update && apt full-upgrade -y
+  ```
+
+- Reboot and reconnect:
+  ```bash
+  reboot
+  ```
+
+- Verify that the swap is active after the reboot:
+  ```bash
+  free -m
+  ```
+
+### Configure UFW
+
+- Run as root:
+  ```bash
+  apt-get install -y ufw
+  ufw default deny incoming
+  ufw default allow outgoing
+  ufw allow OpenSSH
+  ufw allow 'Nginx Full'
+  ufw reload
+  ufw --force enable
+  ```
+
+- Enable IPv6 by editing the UFW configuration:
+  ```bash
+  nano /etc/ufw/ufw/conf
+  ```
+
+- Set `IPV6=yes`.
+
+### Install and Configure Core Security Packages
+
+- Install packages and enable periodic upgrades with automatic reboots:
+  ```bash
+  apt-get install -y unattended-upgrades
+  dpkg-reconfigure --priority=low unattended-upgrades
+  ```
+
+- Edit the configuration with:
+  ```bash
+  nano /etc/apt/apt.conf.d/50unattended-upgrades
+  ```
+  Make sure these lines are present and uncommented:
+  ```
+  Unattended-Upgrade::Automatic-Reboot "true";
+  Unattended-Upgrade::Automatic-Reboot-Time "02:00";
+  Unattended-Upgrade::Remove-Unused-Dependencies "true";
+  ```
+
+- Verify the periodic settings with:
+  ```bash
+  cat /etc/apt/apt.conf.d/20auto-upgrades
+  ```
+  They should include, at least:
+  ```
+  APT::Periodic::Update-Package-Lists "1";
+  APT::Periodic::Unattended-Upgrade "1";
+  APT::Periodic::AutocleanInterval "7";
+  ```
+
+- Restart the service:
+  ```bash
+  systemctl restart unattended-upgrades
+  ```
+
+### Harden SSH with Fail2Ban
+
+- Create a custom jail so that SSH failures lock out bad actors for an hour:
+  ```bash
+  apt-get install -y fail2ban
+  systemctl enable --now fail2ban
+  
+  tee /etc/fail2ban/jail.d/ssh-deploy.conf <<'EOF'
+  [DEFAULT]
+  bantime  = 1h
+  findtime = 10m
+  maxretry = 5
+
+  [sshd]
+  enabled = true port = ssh
+  logpath = %(sshd_log)s
+  EOF
+  ```
+
+- Apply and verify:
+  ```bash
+  systemctl restart fail2ban
+  fail2ban-client status sshd
+  ```
+  The SSH jail should be active and monitoring port 22.
