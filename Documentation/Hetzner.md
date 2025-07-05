@@ -4,6 +4,8 @@
 
 - You’re provisioning a VPS on **Hetzner**. Other providers may have different defaults.
 
+- You're not changing the default port for SSH, which is 22.
+
 - On **Windows**, you're using **MobaXTerm** for SSH and its convenient SFTP file browser.
 
 - On **Linux/macOS**, you already have a recent OpenSSH client installed.
