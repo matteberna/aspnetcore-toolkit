@@ -96,8 +96,8 @@
   mkswap /swapfile
   swapon /swapfile
   echo '/swapfile none swap sw 0 0' >> /etc/fstab
-  echo 'vm.swappiness=10' >> /etc/sysctl.conf
-  sysctl -p
+  echo 'vm.swappiness=10' | sudo tee /etc/sysctl.d/99-swappiness.conf
+  sysctl --system
   ```  
   This allocates a 2 GB swap file, restricts access, and sets the system to prefer RAM over swap.
 
