@@ -455,7 +455,6 @@ sudo systemctl enable --now postgresql
       ssl_certificate     /etc/letsencrypt/live/{{Domain}}/fullchain.pem;
       ssl_certificate_key /etc/letsencrypt/live/{{Domain}}/privkey.pem;
       include             /etc/letsencrypt/options-ssl-nginx.conf;
-      ssl_dhparam         /etc/letsencrypt/ssl-dhparams.pem;
 
       add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
       client_max_body_size 10M;
@@ -529,4 +528,48 @@ sudo systemctl enable --now postgresql
   ```bash
   sudo nginx -t
   sudo systemctl reload nginx
+  ```
+
+## DNS and Certbot Setup
+
+### Configure DNS Records
+
+- In your DNS provider’s dashboard, create `A` records for both `{{Domain}}` and `www.{{Domain}}` pointing to your server’s public IPv4 address (optionally lower the TTL to accelerate propagation).
+
+- Wait until `dig +short {{Domain}}` returns the correct IP.
+
+### Obtain SSL Certificates
+
+- Install the Certbot certificate plugin:
+  ```bash
+  sudo apt install -y certbot python3-certbot-nginx
+  sudo certbot --nginx
+  ```
+  This will show a few dialogs, choose to redirect HTTP → HTTPS when prompted.
+
+- Check NGINX syntax and confirm that the site is serving valid TLS:
+  ```bash
+  sudo nginx -t
+  sudo systemctl reload nginx
+  curl -I https://{{Domain}}
+  ```
+> **Note:** We don't care about plain HTTP and this isn't a wildcard cert, which would need separate DNS verification.
+
+### Enable Automatic Renewal
+
+* If the tests above succeeded, create a renewal hook:
+  ```bash
+  sudo tee /etc/letsencrypt/renewal-hooks/deploy/reload-nginx.sh << 'EOF'
+  #!/usr/bin/env bash
+  systemctl reload nginx
+  EOF
+  sudo chmod +x /etc/letsencrypt/renewal-hooks/deploy/reload-nginx.sh
+  ```
+- Test the renewal process in dry-run mode:
+  ```bash
+  sudo certbot renew --dry-run
+  ```
+- If that succeeds, enable and start Certbot’s systemd timer:
+  ```bash
+  sudo systemctl enable --now certbot.timer
   ```
