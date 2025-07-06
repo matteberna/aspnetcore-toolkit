@@ -103,9 +103,10 @@
 
 ### Set Hostname
 
-- Set the machine's hostname to simplify logging and monitoring:
+- Set the machine's hostname and timezone to simplify logging and monitoring:
   ```bash
   hostnamectl set-hostname {{ProjectLabel}}-prod
+  timedatectl set-timezone UTC
   ```
 - Edit the hosts file:
   ```bash
