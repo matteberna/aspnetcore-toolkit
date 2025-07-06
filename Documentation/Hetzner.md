@@ -201,7 +201,8 @@
   maxretry = 5
 
   [sshd]
-  enabled = true port = ssh
+  enabled = true
+  port = ssh
   logpath = %(sshd_log)s
   EOF
   ```
