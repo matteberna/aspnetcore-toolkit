@@ -145,7 +145,7 @@
 
 - Enable IPv6 by editing the UFW configuration:
   ```bash
-  nano /etc/ufw/ufw/conf
+  nano /etc/ufw/ufw.conf
   ```
 
 - Set `IPV6=yes`.
