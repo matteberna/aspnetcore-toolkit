@@ -319,3 +319,65 @@
   ./bin/Release/net*/linux-*/publish/ \
   deploy@{{IpAddress}}:/var/www/{{ProjectLabel}}/
   ```
+
+## PostgreSQL Installation & Configuration
+
+### Install & Enable Service
+
+- Install PostgreSQL and contrib packages:
+  ```bash
+  sudo apt update
+  sudo apt install -y postgresql postgresql-contrib
+  ```
+- Enable and start the service:
+```bash
+sudo systemctl enable --now postgresql
+```
+
+### Create Database Role & Schema
+
+- Run this SQL command:
+  ```bash
+  sudo -u postgres psql -v ON_ERROR_STOP=1 << EOF
+  CREATE ROLE {{ProjectLabel}} 
+    LOGIN 
+    PASSWORD '{{SqlPassword}}';
+  CREATE DATABASE {{ProjectLabel}} 
+    OWNER {{ProjectLabel}} 
+    ENCODING 'UTF8';
+  GRANT ALL PRIVILEGES ON DATABASE {{ProjectLabel}} TO {{ProjectLabel}};
+  EOF
+  ```
+- Determine the PostgreSQL version and cluster name in variables:
+  ```bash
+  read PGVER CLUSTER <<< $(pg_lsclusters --no-header | awk 'NR==1{print $1, $2}')
+  ```
+- Open the host-based auth file:
+  ```bash
+  sudo nano /etc/postgresql/$PGVER/$CLUSTER/pg_hba.conf
+  ```
+- Replace values so that the local rules section reads exactly:
+  ```ini
+  # Allow only local connections, using SCRAM-SHA-256
+  host    all     all     127.0.0.1/32    scram-sha-256
+  host    all     all     ::1/128         scram-sha-256
+  ```
+
+### Lock Down Network Listeners
+
+- Edit the main config to listen only on localhost and enforce SCRAM encryption:
+  ```bash
+  sudo nano /etc/postgresql/$PGVER/$CLUSTER/postgresql.conf
+  ```
+
+- Ensure these lines are uncommented and set exactly:
+  ```ini
+  listen_addresses = 'localhost'
+  password_encryption = scram-sha-256
+  ```
+> ⚠️**Caution:** This assumes multiple clusters won't co-exist on the machine. In the case of a PostgreSQL upgrade, follow on-screen instructions to safely dispose of the old cluster with `pg_dropcluster` after the migration is successful.
+
+- Reload PostgreSQL to pick up the edits:
+  ```bash
+  sudo systemctl reload postgresql
+  ```
