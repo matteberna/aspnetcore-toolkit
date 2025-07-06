@@ -575,6 +575,19 @@ sudo systemctl enable --now postgresql
 
 ## Miscellaneous
 
+### Time Synchronization
+
+- Install and enable Chrony:
+
+  ```bash  
+  sudo apt update
+  sudo apt install -y chrony
+  sudo systemctl enable --now chrony
+  chronyc tracking
+  timedatectl status
+  ```
+  You should see "System clock synchronized: yes".
+
 ### Amazon SES Configuration
 
 - AWS frequently updates the SES domain-validation process. For the latest instructions on setting up your TXT (for verification), CNAME (for DKIM), and SPF records, see the official AWS docs.
