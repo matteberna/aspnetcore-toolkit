@@ -497,6 +497,7 @@ sudo systemctl enable --now postgresql
 - Inside the `http` block, add:
 
   ```nginx
+  server_tokens off;
   map $http_upgrade $connection_upgrade {
       default   upgrade;
       ''        close;
