@@ -459,6 +459,10 @@ sudo systemctl enable --now postgresql
       include             /etc/letsencrypt/options-ssl-nginx.conf;
 
       add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
+      add_header X-Content-Type-Options "nosniff" always;
+      add_header X-Frame-Options "DENY" always;
+      add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+  
       client_max_body_size 10M;
 
       error_page 502 503 504 /maintenance.html;
