@@ -10,7 +10,7 @@
 
 - On **Linux/macOS**, you already have a recent OpenSSH client installed.
 
-- Follow each step in order without skipping or reordering, because that might lead to configuration errors.
+- You're performing each step in order, with the exact commands and packages given.
 
 ## Preparation
 
