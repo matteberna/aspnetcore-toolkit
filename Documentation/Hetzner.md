@@ -381,3 +381,49 @@ sudo systemctl enable --now postgresql
   ```bash
   sudo systemctl reload postgresql
   ```
+
+### PostgreSQL Backup Restoration
+
+- Create a dedicated backups folder:
+  ```bash
+  sudo mkdir -p /home/deploy/backups
+  sudo chown deploy:deploy /home/deploy/backups
+  sudo chmod 750 /home/deploy/backups
+  ```
+- Upload your dump (named exactly `{{ProjectLabel}}.sql` or `.sql.gz`) into `/home/deploy/backups`.
+
+- Import the dump:
+  ```bash
+  # Uncompressed .sql
+  sudo chown postgres:postgres /home/deploy/backups/{{ProjectLabel}}.sql
+  sudo -u postgres psql --single-transaction {{ProjectLabel}} \
+    < /home/deploy/backups/{{ProjectLabel}}.sql
+
+  # If compressed (.sql.gz)
+  sudo chown postgres:postgres /home/deploy/backups/{{ProjectLabel}}.sql.gz
+  gunzip -c /home/deploy/backups/{{ProjectLabel}}.sql.gz \
+    | sudo -u postgres psql --single-transaction {{ProjectLabel}}
+  ```
+- Verify tables were created:
+  ```bash
+  sudo systemctl restart postgresql
+  sudo -u postgres psql -d {{ProjectLabel}} -c "\dt" || exit 1
+  ```
+- Dispose of the unencrypted dump:
+  ```bash
+  # Simple deletetion
+  sudo rm -f /home/deploy/backups/{{ProjectLabel}}.sql /home/deploy/backups/{{ProjectLabel}}.sql.gz
+  
+  # Advanced shred for very sensitive data
+  # sudo apt-get install -y secure-delete
+  # sudo srm -vz /home/deploy/backups/{{ProjectLabel}}.sql*
+  ```
+
+- Verify the project's `appsettings.Production.json` file has the correct connection string:
+  ```json
+  {
+    "ConnectionStrings": {
+      "DefaultConnection": "Host=localhost;Database={{ProjectLabel}};UserId={{ProjectLabel}};Password={{SqlPassword}};"
+    }
+  }
+  ```
