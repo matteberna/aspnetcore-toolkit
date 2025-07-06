@@ -1,4 +1,4 @@
-﻿# Deployment Guide
+﻿`# Deployment Guide
 
 ## Assumptions
 
@@ -26,7 +26,7 @@
 
 ###  Obtain & Secure SSH Credentials
 
-- Download the SSH private key immediately after provisioning.
+- Download the SSH private key files (`id_rsa`, `id_rsa.bak`, `id_rsa.pub`) immediately after provisioning.
 
 - On **Linux/macOS**, run:
 
@@ -34,8 +34,9 @@
   mkdir -p ~/.ssh
   chmod 700 ~/.ssh
   mv ~/Downloads/id_rsa ~/.ssh/hetzner_project_key
+  mv ~/Downloads/id_rsa.bak    ~/.ssh/hetzner_project_key.bak
   mv ~/Downloads/id_rsa.pub ~/.ssh/hetzner_project_key.pub
-  chmod 600 ~/.ssh/hetzner_project_key
+  chmod 600 ~/.ssh/hetzner_project_key{,.bak}
   chmod 644 ~/.ssh/hetzner_project_key.pub
   ```
 
@@ -696,4 +697,4 @@ sudo systemctl enable --now postgresql
   sudo systemctl enable --now {{ProjectLabel}}
   sudo systemctl status {{ProjectLabel}}
   journalctl -u {{ProjectLabel}} --no-pager
-  ```
+  ````
