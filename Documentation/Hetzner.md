@@ -387,7 +387,6 @@ sudo systemctl enable --now postgresql
 - Create a dedicated backups folder:
   ```bash
   sudo mkdir -p /home/deploy/backups
-  sudo chown deploy:deploy /home/deploy/backups
   sudo chmod 750 /home/deploy/backups
   ```
 - Upload your dump (named exactly `{{ProjectLabel}}.sql` or `.sql.gz`) into `/home/deploy/backups`.
@@ -573,3 +572,59 @@ sudo systemctl enable --now postgresql
   ```bash
   sudo systemctl enable --now certbot.timer
   ```
+
+## Miscellaneous
+
+### Amazon SES Configuration
+
+- AWS frequently updates the SES domain-validation process. For the latest instructions on setting up your TXT (for verification), CNAME (for DKIM), and SPF records, see the official AWS docs.
+
+- In the AWS Console, generate an IAM access key for SES and note:
+
+  **{{ses_id}}**: Access key ID
+  **{{ses_secret}}**: Secret access key
+  **{{ses_region}}**: SES region (e.g. `eu-west-1`)
+
+- In your .NET application, specify the region when instantiating the SES client:
+  ```csharp
+  using var client =
+      new AmazonSimpleEmailServiceClient(RegionEndpoint.GetBySystemName("{{ses_region}}")));
+  ```
+- Save SES credentials on the server:
+  ```bash
+  sudo mkdir -p /home/deploy/.aws
+  
+  sudo tee /home/deploy/.aws/credentials << 'EOF'
+  [default]
+  aws_access_key_id     = {{ses_id}}
+  aws_secret_access_key = {{ses_secret}}
+  EOF
+  
+  sudo tee /home/deploy/.aws/config << 'EOF'
+  [default]
+  region = {{ses_region}}
+  EOF
+  
+  sudo chmod 600 /home/deploy/.aws/config
+  sudo chown -R deploy:deploy /home/deploy/.aws
+  sudo chmod 600 /home/deploy/.aws/credentials
+  ```
+- Save identical `credentials` and `config` files locally under `%USERPROFILE%\.aws\`.
+
+> 💡**Hint:** For improved security, consider storing your SES keys in AWS Secrets Manager.
+
+### Data Protection Configuration
+
+- Create the key storage directory:
+  ```bash
+  sudo mkdir -p /var/keys/{{ProjectLabel}}
+  sudo chmod 750 /var/keys/{{ProjectLabel}}
+  ```
+- If available, manually upload the backup keys from the previous deployment in `/var/keys/{{ProjectLabel}}`.
+
+- In `Program.cs`, add:
+  ```csharp
+  services.AddDataProtection()
+      .PersistKeysToFileSystem(new DirectoryInfo("/var/keys/{{ProjectLabel}}"));
+  ```
+> **Note:** We’re using a single-server key store without certificate protection; for multi-server or high-security setups, add `.ProtectKeysWithCertificate(...)`
