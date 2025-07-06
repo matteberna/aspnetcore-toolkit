@@ -427,3 +427,105 @@ sudo systemctl enable --now postgresql
     }
   }
   ```
+
+## NGINX Installation & Configuration
+
+### Install NGINX
+
+- Install NGINX and create the site configuration:
+  ```bash
+  sudo apt install -y nginx
+  sudo nano /etc/nginx/sites-available/{{ProjectLabel}}.conf
+  ```
+- Paste this content:
+  ```nginx
+  server {
+      listen 80;
+      server_name {{Domain}} www.{{Domain}};
+      return 301 https://$host$request_uri;
+  }
+
+  server {
+      listen 443 ssl http2;
+      server_name {{Domain}} www.{{Domain}};
+
+      root /var/www/{{ProjectLabel}}/wwwroot;
+
+      ssl_certificate     /etc/letsencrypt/live/{{Domain}}/fullchain.pem;
+      ssl_certificate_key /etc/letsencrypt/live/{{Domain}}/privkey.pem;
+      include             /etc/letsencrypt/options-ssl-nginx.conf;
+      ssl_dhparam         /etc/letsencrypt/ssl-dhparams.pem;
+
+      add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
+      client_max_body_size 10M;
+
+      error_page 502 503 504 /maintenance.html;
+      location = /maintenance.html {
+          root   /var/www/{{ProjectLabel}}/wwwroot;
+          internal;
+      }
+
+      location / {
+          limit_req       zone=one burst=10 nodelay;
+          proxy_pass      http://localhost:5000;
+          proxy_http_version 1.1;
+          proxy_set_header Upgrade $http_upgrade;
+          proxy_set_header Connection $connection_upgrade;
+          proxy_set_header Host $host;
+          proxy_cache_bypass $http_upgrade;
+          proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+          proxy_set_header X-Forwarded-Proto $scheme;
+          proxy_buffer_size 4k;
+          proxy_buffers 4 32k;
+          proxy_busy_buffers_size 64k;
+          proxy_connect_timeout 10s;
+          proxy_send_timeout 30s;
+          proxy_read_timeout 30s;
+      }
+  }
+  ```
+> **Note:** The SSL directives referenced here are placeholders.
+
+- Enable the new site, disable the default, and edit the main config:
+
+  ```bash
+  sudo ln -s /etc/nginx/sites-available/{{ProjectLabel}}.conf /etc/nginx/sites-enabled/
+  sudo rm /etc/nginx/sites-enabled/default
+  sudo nano /etc/nginx/nginx.conf
+  ```
+- Inside the `http` block, add:
+
+  ```nginx
+  map $http_upgrade $connection_upgrade {
+      default   upgrade;
+      ''        close;
+  }
+
+  ssl_session_cache   shared:SSL:10m;
+  ssl_session_timeout 10m;
+
+  limit_req_zone $binary_remote_addr zone=one:10m rate=5r/s;
+
+  gzip on;
+  gzip_vary on;
+  gzip_proxied any;
+  gzip_comp_level 6;
+  gzip_buffers 16 8k;
+  gzip_http_version 1.1;
+  gzip_types
+      text/plain
+      text/css
+      application/json
+      application/javascript
+      text/xml
+      application/xml
+      application/xml+rss
+      text/javascript;
+  ``` 
+> **Note:** Place `limit_req_zone` and `ssl_session_*` directives at the top, before any `include` statements.
+
+- Validate the configuration:
+  ```bash
+  sudo nginx -t
+  sudo systemctl reload nginx
+  ```
