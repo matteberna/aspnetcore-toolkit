@@ -628,3 +628,59 @@ sudo systemctl enable --now postgresql
       .PersistKeysToFileSystem(new DirectoryInfo("/var/keys/{{ProjectLabel}}"));
   ```
 > **Note:** We’re using a single-server key store without certificate protection; for multi-server or high-security setups, add `.ProtectKeysWithCertificate(...)`
+
+## Execution
+
+### systemd Configuration
+
+- Make the application binary executable:
+  ```bash
+  sudo chmod +x /var/www/{{ProjectLabel}}/{{ProjectName}}
+  ```
+- Create the systemd unit file:
+  ```bash
+  sudo tee /etc/systemd/system/{{ProjectLabel}}.service << 'EOF'
+  [Unit]
+  Description={{ProjectName}} ASP.NET Core application
+  After=network.target
+
+  [Service]
+  WorkingDirectory=/var/www/{{ProjectLabel}}
+  ExecStart=/var/www/{{ProjectLabel}}/{{ProjectName}}
+  ExecReload=/bin/kill -s HUP $MAINPID
+  Environment=ASPNETCORE_URLS=http://localhost:5000
+  Environment=ASPNETCORE_ENVIRONMENT=Production
+  Environment=DOTNET_PRINT_TELEMETRY_MESSAGE=false
+  Restart=on-failure
+  RestartSec=5
+  StartLimitIntervalSec=60
+  StartLimitBurst=5
+  TimeoutStopSec=20
+  SuccessExitStatus=143
+  SyslogIdentifier={{ProjectName}}
+  User=deploy
+  Group=web
+  PrivateTmp=true
+  LimitNOFILE=65536
+  StandardOutput=journal
+  StandardError=journal
+
+  [Install]
+  WantedBy=multi-user.target
+  EOF
+  
+  sudo chmod 644 /etc/systemd/system/{{ProjectLabel}}.service
+  ```
+  > **Note:** `{{ProjectName}}` is the name of the self-contained binary in the `/www` folder, no extension.
+
+- Verify the status:
+  ```bash
+  sudo systemctl daemon-reload
+  sudo systemd-analyze verify /etc/systemd/system/{{ProjectLabel}}.service
+  ```
+- Start the application and keep an eye on live logs:
+  ```bash
+  sudo systemctl enable --now {{ProjectLabel}}
+  sudo systemctl status {{ProjectLabel}}
+  journalctl -u {{ProjectLabel}} --no-pager
+  ```
