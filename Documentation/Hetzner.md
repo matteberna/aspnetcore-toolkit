@@ -435,6 +435,7 @@ sudo systemctl enable --now postgresql
 - Install NGINX and create the site configuration:
   ```bash
   sudo apt install -y nginx
+  sudo systemctl enable --now nginx
   sudo nano /etc/nginx/sites-available/{{ProjectLabel}}.conf
   ```
 - Paste this content:
