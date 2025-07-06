@@ -133,7 +133,7 @@
 
 - Run as root:
   ```bash
-  apt-get install -y ufw
+  apt install -y ufw
   ufw default deny incoming
   ufw default allow outgoing
   ufw allow OpenSSH
@@ -153,7 +153,7 @@
 
 - Install packages and enable periodic upgrades with automatic reboots:
   ```bash
-  apt-get install -y unattended-upgrades
+  apt install -y unattended-upgrades
   dpkg-reconfigure --priority=low unattended-upgrades
   ```
 
@@ -190,7 +190,7 @@
 
 - Create a custom jail so that SSH failures lock out bad actors for an hour:
   ```bash
-  apt-get install -y fail2ban
+  apt install -y fail2ban
   systemctl enable --now fail2ban
   
   tee /etc/fail2ban/jail.d/ssh-deploy.conf <<'EOF'
@@ -414,7 +414,7 @@ sudo systemctl enable --now postgresql
   sudo rm -f /home/deploy/backups/{{ProjectLabel}}.sql /home/deploy/backups/{{ProjectLabel}}.sql.gz
   
   # Advanced shred for very sensitive data
-  # sudo apt-get install -y secure-delete
+  # sudo apt install -y secure-delete
   # sudo srm -vz /home/deploy/backups/{{ProjectLabel}}.sql*
   ```
 
