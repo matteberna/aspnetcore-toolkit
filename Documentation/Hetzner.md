@@ -508,8 +508,11 @@ sudo systemctl enable --now postgresql
       ''        close;
   }
 
-  ssl_session_cache   shared:SSL:10m;
-  ssl_session_timeout 10m;
+  client_header_timeout 10s;
+  client_body_timeout   10s;
+  send_timeout          10s;
+  ssl_session_cache     shared:SSL:10m;
+  ssl_session_timeout   10m;
 
   limit_req_zone $binary_remote_addr zone=one:10m rate=5r/s;
 
