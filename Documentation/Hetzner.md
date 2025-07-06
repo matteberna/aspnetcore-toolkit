@@ -265,3 +265,57 @@
   sudo systemctl restart ssh
   ``` 
 - From a fresh session, ensure that you can SSH back in as **deploy** and that root login is disabled.
+
+## Build Upload
+
+### Prepare the Self-Contained Build
+
+- Open `{{ProjectName}}.csproj` and add under `<PropertyGroup>`:
+
+  ```xml
+  <PropertyGroup>
+        <RuntimeIdentifier>linux-x64</RuntimeIdentifier>
+        <SelfContained>true</SelfContained>
+        <PublishSingleFile>true</PublishSingleFile>
+        <EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
+        <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
+        <DebugType>none</DebugType>
+    </PropertyGroup>
+  ```
+- Adjust `RuntimeIdentifier` to `linux-arm64` for ARM instances.
+
+- Publish in Release mode:
+  ```
+  dotnet publish -c Release
+  ```
+  The output appears in `bin/Release/net*/linux-*/publish/`.
+
+### Configure Web Directory & Permissions
+
+- Create a shared **web** group and add both users:
+  ```bash
+  sudo getent group web || sudo groupadd web
+  sudo usermod -aG web deploy
+  sudo usermod -aG web www-data
+  ```
+- Prepare the target directory:
+  ```bash
+  sudo mkdir -p /var/www/{{ProjectLabel}}
+  sudo chgrp -R web /var/www/{{ProjectLabel}}
+  sudo chmod -R g+rwXs /var/www/{{ProjectLabel}}
+  sudo chown -R deploy:web /var/www/{{ProjectLabel}}
+  sudo find /var/www/{{ProjectLabel}} -type d -exec chmod 2775 {} \;
+  sudo find /var/www/{{ProjectLabel}} -type f -exec chmod 664 {} \;
+  ```
+  This ensures new files are also inheriting the web group.
+
+### Upload the Build
+
+- On **Windows**, use MobaXTerm's SFTP interface to transfer the published files to `/var/www/{{ProjectLabel}}`.
+
+- On **Linux/macOS**, run:
+  ```bash
+  rsync -avz --delete \
+  ./bin/Release/net*/linux-*/publish/ \
+  deploy@{{IpAddress}}:/var/www/{{ProjectLabel}}/
+  ```
