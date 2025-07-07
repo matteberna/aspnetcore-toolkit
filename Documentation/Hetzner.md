@@ -453,10 +453,15 @@ sudo systemctl enable --now postgresql
       server_name {{Domain}} www.{{Domain}};
 
       root /var/www/{{ProjectLabel}}/wwwroot;
-
-      ssl_certificate     /etc/letsencrypt/live/{{Domain}}/fullchain.pem;
-      ssl_certificate_key /etc/letsencrypt/live/{{Domain}}/privkey.pem;
-      include             /etc/letsencrypt/options-ssl-nginx.conf;
+  
+      ssl_stapling on;
+      ssl_stapling_verify on;
+      resolver 1.1.1.1 8.8.4.4 valid=300s;
+      resolver_timeout 5s;
+      ssl_certificate     	/etc/letsencrypt/live/{{Domain}}/fullchain.pem;
+      ssl_certificate_key 	/etc/letsencrypt/live/{{Domain}}/privkey.pem;
+      ssl_trusted_certificate /etc/letsencrypt/live/{{Domain}}/chain.pem;
+      include             	/etc/letsencrypt/options-ssl-nginx.conf;
 
       add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
       add_header X-Content-Type-Options "nosniff" always;
