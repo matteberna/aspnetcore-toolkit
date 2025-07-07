@@ -707,6 +707,7 @@ sudo systemctl enable --now postgresql
   RestartSec=5
   StartLimitIntervalSec=60
   StartLimitBurst=5
+  TimeoutStartSec=20s
   TimeoutStopSec=20
   SuccessExitStatus=143
   SyslogIdentifier={{ProjectName}}
