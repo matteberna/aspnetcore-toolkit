@@ -505,6 +505,11 @@ sudo systemctl enable --now postgresql
   ```
 > **Note:** The SSL directives referenced here are placeholders.
 
+- Generate a 2048-bit DH param file (takes a minute):
+  ```bash
+  sudo openssl dhparam -out /etc/ssl/certs/dhparam.pem 2048
+  ```
+
 - Enable the new site, disable the default, and edit the main config:
 
   ```bash
@@ -521,6 +526,7 @@ sudo systemctl enable --now postgresql
   client_body_timeout 10s;
   send_timeout 10s;
   keepalive_timeout 15s;
+  ssl_dhparam /etc/ssl/certs/dhparam.pem;
   ssl_session_cache shared:SSL:10m;
   ssl_session_timeout 10m;
   ssl_protocols TLSv1.2 TLSv1.3;
