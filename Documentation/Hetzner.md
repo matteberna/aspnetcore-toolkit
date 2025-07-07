@@ -571,6 +571,10 @@ sudo systemctl enable --now postgresql
   ssl_ciphers HIGH:!aNULL:!MD5;
   ssl_prefer_server_ciphers on;
   
+  sendfile on;
+  tcp_nopush on;
+  tcp_nodelay on;
+  
   map $http_upgrade $connection_upgrade {
       default   upgrade;
       ''        close;
