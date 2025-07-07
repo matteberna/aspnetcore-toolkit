@@ -520,6 +520,18 @@ sudo systemctl enable --now postgresql
   sudo rm /etc/nginx/sites-enabled/default
   sudo nano /etc/nginx/nginx.conf
   ```
+- At the very top, before the `http` block, add:
+
+  ```nginx
+  worker_processes auto;
+  worker_rlimit_nofile 65536;
+  
+  events {
+      worker_connections 1024;
+      multi_accept on;
+  }
+  ```
+
 - Inside the `http` block, add:
 
   ```nginx
