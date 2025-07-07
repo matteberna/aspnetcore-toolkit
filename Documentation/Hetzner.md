@@ -512,6 +512,7 @@ sudo systemctl enable --now postgresql
   client_header_timeout 10s;
   client_body_timeout 10s;
   send_timeout 10s;
+  keepalive_timeout 15s;
   ssl_session_cache shared:SSL:10m;
   ssl_session_timeout 10m;
   ssl_protocols TLSv1.2 TLSv1.3;
