@@ -1,4 +1,4 @@
-﻿`# Deployment Guide
+﻿# Deployment Guide
 
 ## Assumptions
 
@@ -18,13 +18,13 @@
 
 - You're going to need a machine with at least 2 dedicated vCPUs and 8 GB RAM.
 
-- Pick the most recent **Ubuntu LTS** distribution.
+- Choose the latest **Ubuntu LTS** release.
 
 - You can optionally enable **IPv6** for free during creation.
 
 - Enable **snapshot backups**, which give you easy rollback points in case something goes wrong.
 
-###  Obtain & Secure SSH Credentials
+### Obtain & Secure SSH Credentials
 
 - Download the SSH private key files (`id_rsa`, `id_rsa.bak`, `id_rsa.pub`) immediately after provisioning.
 
@@ -34,7 +34,7 @@
   mkdir -p ~/.ssh
   chmod 700 ~/.ssh
   mv ~/Downloads/id_rsa ~/.ssh/hetzner_project_key
-  mv ~/Downloads/id_rsa.bak    ~/.ssh/hetzner_project_key.bak
+  mv ~/Downloads/id_rsa.bak ~/.ssh/hetzner_project_key.bak
   mv ~/Downloads/id_rsa.pub ~/.ssh/hetzner_project_key.pub
   chmod 600 ~/.ssh/hetzner_project_key{,.bak}
   chmod 644 ~/.ssh/hetzner_project_key.pub
@@ -44,7 +44,7 @@
 
 - On your first connection, verify the server’s host key fingerprint against the one shown in the Hetzner console, which is the string in the format `sha256:XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX`.
 
-- Upload the `id_rsa.bak` to an off-site secure vault.
+- Upload the `hetzner_project_key.bak` to an off-site secure vault.
 
 > **⚠️Caution:** This is a one-time download. Lose it, and you must contact Hetzner support or rebuild the server.
 
@@ -101,7 +101,7 @@
   ```  
   This allocates a 2 GB swap file, restricts access, and sets the system to prefer RAM over swap.
 
-### Set Hostname
+### Set Hostname & Timezone
 
 - Set the machine's hostname and timezone to simplify logging and monitoring:
   ```bash
@@ -300,6 +300,8 @@
   ``` 
 - From a fresh session, ensure that you can SSH back in as **deploy** and that root login is disabled.
 
+> **Note:** Moving forward, all commands will be prefixed with `sudo`.
+
 ## Build Upload
 
 ### Prepare the Self-Contained Build
@@ -372,7 +374,7 @@ sudo systemctl enable --now postgresql
 
 - Run this SQL command:
   ```bash
-  sudo -u postgres psql -v ON_ERROR_STOP=1 << EOF
+  sudo -u postgres psql -v ON_ERROR_STOP=1 << EOF
   CREATE ROLE {{ProjectLabel}} 
     LOGIN 
     PASSWORD '{{SqlPassword}}';
@@ -489,10 +491,11 @@ sudo systemctl enable --now postgresql
       ssl_stapling_verify on;
       resolver 1.1.1.1 8.8.4.4 valid=300s;
       resolver_timeout 5s;
-      ssl_certificate     	/etc/letsencrypt/live/{{Domain}}/fullchain.pem;
-      ssl_certificate_key 	/etc/letsencrypt/live/{{Domain}}/privkey.pem;
+      ssl_certificate /etc/letsencrypt/live/{{Domain}}/fullchain.pem;
+      ssl_certificate_key /etc/letsencrypt/live/{{Domain}}/privkey.pem;
       ssl_trusted_certificate /etc/letsencrypt/live/{{Domain}}/chain.pem;
-      include             	/etc/letsencrypt/options-ssl-nginx.conf;
+  
+      include /etc/letsencrypt/options-ssl-nginx.conf;
 
       add_header Strict-Transport-Security "max-age=31536000; includeSubDomains; preload" always;
       add_header X-Content-Type-Options "nosniff" always;
@@ -503,13 +506,13 @@ sudo systemctl enable --now postgresql
 
       error_page 502 503 504 /maintenance.html;
       location = /maintenance.html {
-          root   /var/www/{{ProjectLabel}}/wwwroot;
+          root /var/www/{{ProjectLabel}}/wwwroot;
           internal;
       }
 
       location / {
-          limit_req       zone=one burst=10 nodelay;
-          proxy_pass      http://localhost:5000;
+          limit_req zone=one burst=10 nodelay;
+          proxy_pass http://localhost:5000;
           proxy_http_version 1.1;
           proxy_set_header Upgrade $http_upgrade;
           proxy_set_header Connection $connection_upgrade;
@@ -698,7 +701,7 @@ sudo systemctl enable --now postgresql
   
   sudo tee /home/deploy/.aws/credentials << 'EOF'
   [default]
-  aws_access_key_id     = {{ses_id}}
+  aws_access_key_id = {{ses_id}}
   aws_secret_access_key = {{ses_secret}}
   EOF
   
