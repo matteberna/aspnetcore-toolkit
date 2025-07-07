@@ -216,6 +216,25 @@
   logpath = %(sshd_log)s
   EOF
   ```
+  
+- Add another jail to block clients hammering the site with 4xx/5xx errors:
+  ```bash
+  sudo tee /etc/fail2ban/filter.d/nginx-errors.conf << 'EOF'
+  [Definition]
+  failregex = <HOST> -.*"(GET|POST).* HTTP/.*" (404|429|444|500)
+  EOF
+  
+  sudo tee /etc/fail2ban/jail.d/nginx-errors.conf << 'EOF'
+  [nginx-errors]
+  enabled  = true
+  filter   = nginx-errors
+  port     = http,https
+  logpath  = /var/log/nginx/access.log
+  maxretry = 10
+  findtime = 600
+  bantime  = 3600
+  EOF
+  ```
 
 - Apply and verify:
   ```bash
