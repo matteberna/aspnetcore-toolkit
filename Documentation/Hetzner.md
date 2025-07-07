@@ -467,7 +467,7 @@ sudo systemctl enable --now postgresql
 
 - Install NGINX and create the site configuration:
   ```bash
-  sudo apt install -y nginx
+  sudo apt install -y nginx brotli nginx-module-brotli
   sudo systemctl enable --now nginx
   sudo nano /etc/nginx/sites-available/{{ProjectLabel}}.conf
   ```
@@ -543,6 +543,9 @@ sudo systemctl enable --now postgresql
 - At the very top, before the `http` block, add:
 
   ```nginx
+  load_module modules/ngx_http_brotli_filter_module.so;
+  load_module modules/ngx_http_brotli_static_module.so;
+
   worker_processes auto;
   worker_rlimit_nofile 65536;
   
@@ -575,6 +578,18 @@ sudo systemctl enable --now postgresql
 
   limit_req_zone $binary_remote_addr zone=one:10m rate=5r/s;
 
+  brotli on;
+  brotli_comp_level 6;
+  brotli_types
+      text/plain
+      text/css
+      application/javascript
+      application/json
+      application/xml+rss
+      text/javascript
+      text/xml
+      image/svg+xml;
+  
   gzip on;
   gzip_vary on;
   gzip_proxied any;
@@ -584,13 +599,13 @@ sudo systemctl enable --now postgresql
   gzip_types
       text/plain
       text/css
-      application/json
       application/javascript
-      text/xml
+      application/json
       application/xml
       application/xml+rss
-      text/javascript;
-  ``` 
+      text/javascript
+      text/xml;
+  ```
 > **Note:** Place `limit_req_zone` and `ssl_session_*` directives at the top, before any `include` statements.
 
 - Validate the configuration:
