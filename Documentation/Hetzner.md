@@ -463,7 +463,7 @@ sudo systemctl enable --now postgresql
       ssl_trusted_certificate /etc/letsencrypt/live/{{Domain}}/chain.pem;
       include             	/etc/letsencrypt/options-ssl-nginx.conf;
 
-      add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
+      add_header Strict-Transport-Security "max-age=31536000; includeSubDomains; preload" always;
       add_header X-Content-Type-Options "nosniff" always;
       add_header X-Frame-Options "DENY" always;
       add_header Referrer-Policy "strict-origin-when-cross-origin" always;
