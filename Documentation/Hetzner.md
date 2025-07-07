@@ -255,10 +255,13 @@
   ```
   Ensure the following are uncommented and set exactly:
   ```
+  AllowUsers deploy
   PermitRootLogin no
   PasswordAuthentication no
   PermitEmptyPasswords no
   ChallengeResponseAuthentication no
+  MaxAuthTries 3
+  MaxSessions 1
   UsePAM yes
   X11Forwarding no
   ```
