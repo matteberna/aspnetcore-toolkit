@@ -508,16 +508,20 @@ sudo systemctl enable --now postgresql
 
   ```nginx
   server_tokens off;
+
+  client_header_timeout 10s;
+  client_body_timeout 10s;
+  send_timeout 10s;
+  ssl_session_cache shared:SSL:10m;
+  ssl_session_timeout 10m;
+  ssl_protocols TLSv1.2 TLSv1.3;
+  ssl_ciphers HIGH:!aNULL:!MD5;
+  ssl_prefer_server_ciphers on;
+  
   map $http_upgrade $connection_upgrade {
       default   upgrade;
       ''        close;
   }
-
-  client_header_timeout 10s;
-  client_body_timeout   10s;
-  send_timeout          10s;
-  ssl_session_cache     shared:SSL:10m;
-  ssl_session_timeout   10m;
 
   limit_req_zone $binary_remote_addr zone=one:10m rate=5r/s;
 
