@@ -108,11 +108,19 @@
   hostnamectl set-hostname {{ProjectLabel}}-prod
   timedatectl set-timezone UTC
   ```
+  
 - Edit the hosts file:
   ```bash
   nano /etc/hosts
   ```
   Update the `127.0.1.1` line to match `{{ProjectLabel}}-prod`
+
+- Enable persistent journald logs
+  ```bash
+  mkdir -p /var/log/journal
+  sed -i 's/#Storage=auto/Storage=persistent/' /etc/systemd/journald.conf
+  systemctl restart systemd-journald
+  ```
 
 ### Apply all updates
 
