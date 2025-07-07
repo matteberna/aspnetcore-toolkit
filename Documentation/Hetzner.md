@@ -150,6 +150,7 @@
   ufw allow 'Nginx Full'
   ufw reload
   ufw --force enable
+  ufw status verbose
   ```
 
 - Enable IPv6 by editing the UFW configuration:
