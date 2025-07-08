@@ -777,7 +777,8 @@ sudo systemctl enable --now postgresql
 - Create the key storage directory:
   ```bash
   sudo mkdir -p /var/keys/{{ProjectLabel}}
-  sudo chmod 750 /var/keys/{{ProjectLabel}}
+  sudo chown deploy:web /var/keys/{{ProjectLabel}}
+  sudo chmod 770 /var/keys/{{ProjectLabel}}
   ```
 
 - If available, manually upload the backup keys from the previous deployment in `/var/keys/{{ProjectLabel}}`.
