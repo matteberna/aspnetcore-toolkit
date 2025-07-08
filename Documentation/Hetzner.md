@@ -14,6 +14,25 @@
 
 ## Preparation
 
+### Generate & Secure SSH Credentials
+
+- on **Windows**, using either Git Bash or WSL:
+  ```bash
+  mkdir -p ~/.ssh
+  ssh-keygen.exe -t rsa -b 4096 -m PEM -f ~/.ssh/hetzner_project_key -N "" -C "deploy@windows"
+  ```
+- on **Linux/macOS**:
+  ```bash
+  mkdir -p ~/.ssh && chmod 700 ~/.ssh
+  ssh-keygen -t rsa -b 4096 -m PEM -f ~/.ssh/hetzner_project_key -N '' -C "deploy@yourmachine"
+  chmod 600 ~/.ssh/hetzner_project_key
+  chmod 644 ~/.ssh/hetzner_project_key.pub
+  ```
+  
+> **Note:** The -C parameter is just a human-readable label, and you’re free to change it later without breaking anything.
+
+- Upload `hetzner_project_key` to an off-site secure vault (the public key can always be regenerated from it).
+
 ### Provision a VPS
 
 - You're going to need a machine with at least 2 dedicated vCPUs and 8 GB RAM.
@@ -22,25 +41,9 @@
 
 - You can optionally enable **IPv6** for free during creation.
 
-- Enable **snapshot backups**, which give you easy rollback points in case something goes wrong.
+- Select the public (.pub) key you just generated.
 
-### Obtain & Secure SSH Credentials
-
-- Download the SSH private key files (`id_rsa`, `id_rsa.bak`, `id_rsa.pub`) immediately after provisioning.
-
-- On **Linux/macOS**, run:
-
-  ```bash
-  mkdir -p ~/.ssh
-  chmod 700 ~/.ssh
-  mv ~/Downloads/id_rsa ~/.ssh/hetzner_project_key
-  mv ~/Downloads/id_rsa.bak ~/.ssh/hetzner_project_key.bak
-  mv ~/Downloads/id_rsa.pub ~/.ssh/hetzner_project_key.pub
-  chmod 600 ~/.ssh/hetzner_project_key{,.bak}
-  chmod 644 ~/.ssh/hetzner_project_key.pub
-  ```
-
-- On **Windows**, store the key  in an encrypted vault. If you don’t already use one, [KeePass](https://keepass.info/) and [Bitwarden](https://bitwarden.com/) both support storing files securely.
+> **Note:** Automatic backups give you easy rollback points in case something goes wrong, but they also increase the server's monthly cost by 20%. Since we're going to set up database backups, these aren't strictly necessary.
 
 - On your first connection, verify the server’s host key fingerprint against the one shown in the Hetzner console, which is the string in the format `sha256:XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX`.
 
