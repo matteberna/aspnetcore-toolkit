@@ -177,7 +177,7 @@
   Make sure these lines are present and uncommented:
   ```
   Unattended-Upgrade::Automatic-Reboot "true";
-  Unattended-Upgrade::Automatic-Reboot-Time "02:00";
+  Unattended-Upgrade::Automatic-Reboot-Time "04:30";
   Unattended-Upgrade::Remove-Unused-Dependencies "true";
   ```
 
@@ -745,7 +745,7 @@ sudo systemctl enable --now postgresql
 - In your .NET application, specify the region when instantiating the SES client:
   ```csharp
   using var client =
-      new AmazonSimpleEmailServiceClient(RegionEndpoint.GetBySystemName("{{ses_region}}")));
+      new AmazonSimpleEmailServiceClient(RegionEndpoint.GetBySystemName("{{ses_region}}"));
   ```
 
 - Save SES credentials on the server:
