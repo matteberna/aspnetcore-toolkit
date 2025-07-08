@@ -569,6 +569,10 @@ sudo systemctl enable --now postgresql
   ```nginx
   server_tokens off;
 
+  set_real_ip_from   127.0.0.1;
+  real_ip_header     X-Forwarded-For;
+  real_ip_recursive  on;
+  
   client_header_timeout 10s;
   client_body_timeout 10s;
   send_timeout 10s;
