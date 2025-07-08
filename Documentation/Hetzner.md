@@ -41,7 +41,7 @@
 
 - Choose the latest **Ubuntu LTS** release (**24.04+** as of July 2025)
 
-- You can optionally enable **IPv6** for free during creation.
+- Avoid enabling the **IPv6 address**, which the application won't support.
 
 - Select the public (.pub) key you just generated.
 
@@ -155,17 +155,11 @@
   ufw default allow outgoing
   ufw allow OpenSSH
   ufw allow 'Nginx Full'
+  sed -i 's/^IPV6=.*/IPV6=no/' /etc/ufw/ufw.conf
   ufw reload
   ufw --force enable
   ufw status verbose
   ```
-
-- Enable IPv6 by editing the UFW configuration:
-  ```bash
-  nano /etc/ufw/ufw.conf
-  ```
-
-- Set `IPV6=yes`.
 
 ### Install and Configure Core Security Packages
 
