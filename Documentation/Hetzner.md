@@ -315,13 +315,14 @@
 
   ```xml
   <PropertyGroup>
-        <RuntimeIdentifier>linux-x64</RuntimeIdentifier>
-        <SelfContained>true</SelfContained>
-        <PublishSingleFile>true</PublishSingleFile>
-        <EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
-        <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
-        <DebugType>none</DebugType>
-    </PropertyGroup>
+      <RuntimeIdentifier>linux-x64</RuntimeIdentifier>
+      <SelfContained>true</SelfContained>
+      <PublishSingleFile>true</PublishSingleFile>
+      <EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
+      <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
+      <PublishReadyToRun>true</PublishReadyToRun>
+      <DebugType>none</DebugType>
+  </PropertyGroup>
   ```
 - Adjust `RuntimeIdentifier` to `linux-arm64` for ARM instances.
 
