@@ -414,7 +414,9 @@ sudo systemctl enable --now postgresql
 
 - Determine the PostgreSQL version and cluster name in variables:
   ```bash
-  read PGVER CLUSTER <<< $(pg_lsclusters --no-header | awk 'NR==1{print $1, $2}')
+  read PGVER CLUSTER <<EOF
+  $(pg_lsclusters --no-header | awk 'NR==1{print $1, $2}')
+  EOF
   ```
 
 - Open the host-based auth file:
