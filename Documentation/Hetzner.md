@@ -424,10 +424,13 @@ sudo systemctl enable --now postgresql
 
 - Replace values so that the local rules section reads exactly:
   ```ini
-  # Allow only local connections, using SCRAM-SHA-256
-  local     all     all     scram-sha-256
-  host      all     all     127.0.0.1/32 scram-sha-256
-  host      all     all     ::1/128 scram-sha-256
+  # Allow local peer auth for postgres
+  local     all     postgres                    peer
+  
+  # Then require SCRAM for everyone else
+  local     all     all                         scram-sha-256
+  host      all     all         127.0.0.1/32    scram-sha-256
+  host      all     all         ::1/128         scram-sha-256
   ```
 
 ### Lock Down Network Listeners
