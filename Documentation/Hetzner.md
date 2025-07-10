@@ -696,7 +696,7 @@ sudo systemctl enable --now postgresql
   ```
 - Add this line to run the backup at **00:00** and **12:00** UTC every day:
   ```
-  0 0,12 * * * /usr/local/bin/{{ProjectLabel}}_backup.sh >/dev/null 2>&1
+  0 0,12 * * * /usr/local/bin/{{ProjectLabel}}_backup.sh >> /home/deploy/backups/backup.log 2>&1
   ```
 - Save and exit; cron will pick up the new schedule immediately.
 
