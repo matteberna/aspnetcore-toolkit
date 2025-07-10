@@ -666,7 +666,7 @@ sudo systemctl enable --now postgresql
   sudo systemctl reload nginx
   ```
 
-## Daily Backups
+## Semi-Daily Backups
 
 ### Define the PostgreSQL backup script
 
@@ -674,6 +674,7 @@ sudo systemctl enable --now postgresql
   ```bash
   sudo tee /usr/local/bin/{{ProjectLabel}}_backup.sh << 'EOF'
   #!/usr/bin/env bash
+  export BACKUP_GPG_PASSPHRASE="{{BackupPassphrase}}"
   set -euo pipefail
   TIMESTAMP=$(date +%Y-%m-%dT%H%M)
   BACKUP_DIR=/home/deploy/backups
@@ -681,8 +682,14 @@ sudo systemctl enable --now postgresql
   mkdir -p "${BACKUP_DIR}"
   chmod 750 "${BACKUP_DIR}"
   sudo -u postgres /usr/bin/pg_dump {{ProjectLabel}} | gzip > "${BACKUP_DIR}/${FILENAME}"
-  # Prune backups older than 14 days
-  find "${BACKUP_DIR}" -type f -name "{{ProjectLabel}}_*.sql.gz" -mtime +7 -delete
+  ENC_FILE="${BACKUP_DIR}/${FILENAME}.gpg"
+  gpg --batch --yes \
+    --cipher-algo AES256 \
+    --passphrase "$BACKUP_GPG_PASSPHRASE" \
+    --output "${ENC_FILE}" \
+    --symmetric "${BACKUP_DIR}/${FILENAME}"
+  rm -f "${BACKUP_DIR}/${FILENAME}"
+  find "${BACKUP_DIR}" -type f -name "{{ProjectLabel}}_*.sql.gz.gpg" -mtime +7 -delete
   EOF
 
   sudo chmod +x /usr/local/bin/{{ProjectLabel}}_backup.sh
@@ -705,7 +712,7 @@ sudo systemctl enable --now postgresql
 - Manually run the script once to confirm it works:
   ```bash
   /usr/local/bin/{{ProjectLabel}}_backup.sh
-  ls -l /home/deploy/backups/{{ProjectLabel}}_*.sql.gz
+  ls -l /home/deploy/backups/{{ProjectLabel}}_*.sql.gz.gpg
   ```
 - If backups don’t appear as expected, check the logs with:
   ```bash
