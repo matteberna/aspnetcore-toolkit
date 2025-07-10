@@ -12,6 +12,21 @@
 
 - You're performing each step in order, with the exact commands and packages given.
 
+### Initialize Documentation Placeholders
+
+- Before you run any scripts or generate config files, replace these everywhere:
+
+| Placeholder          | Meaning                                                         | Example                                |
+|:---------------------|:----------------------------------------------------------------|:---------------------------------------|
+| {{ProjectName}}      | The full project name in Pascal case (matches the C# solution)  | MyLatestProject                        |
+| {{ProjectLabel}}     | Short label for services and filenames (lowercase, single word) | project                                |
+| {{Domain}}           | Root domain (no protocols, www, or subdomains)                  | myproject.net                          |
+| {{IpAddress}}        | The server's public IPv4 address                                | 103.86.98.1                            |
+| {{SqlPassword}}      | A strong, randomly generated password for the database          | f7Hp!9Lk2$Qx                           |
+| {{BackupPassphrase}} | A strong passphrase to use for encrypting backups               | Confound-Countdown-Browse-Shiny-Copper |
+
+> **💡Tip:** Use your favorite editor’s "Find & Replace in Files" feature (typically Ctrl+Shift+F) for bulk swaps.
+
 ## Preparation
 
 ### Generate & Secure SSH Credentials
@@ -35,6 +50,8 @@
 
 - Upload `hetzner_project_key` to an off-site secure vault (the public key can always be regenerated from it).
 
+- Secure both passwords you've generated in the previous section, as well.
+
 ### Provision a VPS
 
 - You're going to need a machine with at least 2 dedicated vCPUs and 8 GB RAM.
@@ -52,20 +69,6 @@
   is the string in the format `sha256:XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX`.
 
 > **⚠️Caution:** This is a one-time download. Lose it, and you must contact Hetzner support or rebuild the server.
-
-### Initialize Documentation Placeholders
-
-- Before you run any scripts or generate config files, replace these everywhere:
-
-| Placeholder      | Meaning                                                         | Example         |
-|------------------|-----------------------------------------------------------------|-----------------|
-| {{ProjectName}}  | The full project name in Pascal case (matches the C# solution)  | MyLatestProject |
-| {{ProjectLabel}} | Short label for services and filenames (lowercase, single word) | project         |
-| {{Domain}}       | Root domain (no protocols, www, or subdomains)                  | myproject.net   |
-| {{SqlPassword}}  | A strong, randomly generated password for the database          | f7Hp!9Lk2$Qx    |
-| {{IpAddress}}    | The server's public IPv4 address                                | 103.86.98.1     |
-
-> **💡Tip:** Use your favorite editor’s "Find & Replace in Files" feature (typically Ctrl+Shift+F) for bulk swaps.
 
 ### Configure The SSH Client (Windows)
 
