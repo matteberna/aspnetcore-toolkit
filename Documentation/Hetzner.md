@@ -666,6 +666,52 @@ sudo systemctl enable --now postgresql
   sudo systemctl reload nginx
   ```
 
+## Daily Backups
+
+### Define the PostgreSQL backup script
+
+- Create the script and set permissions:
+  ```bash
+  sudo tee /usr/local/bin/{{ProjectLabel}}_backup.sh << 'EOF'
+  #!/usr/bin/env bash
+  set -euo pipefail
+  TIMESTAMP=$(date +%Y-%m-%dT%H%M)
+  BACKUP_DIR=/home/deploy/backups
+  FILENAME="{{ProjectLabel}}_${TIMESTAMP}.sql.gz"
+  mkdir -p "${BACKUP_DIR}"
+  chmod 750 "${BACKUP_DIR}"
+  sudo -u postgres /usr/bin/pg_dump {{ProjectLabel}} | gzip > "${BACKUP_DIR}/${FILENAME}"
+  # Prune backups older than 14 days
+  find "${BACKUP_DIR}" -type f -name "{{ProjectLabel}}_*.sql.gz" -mtime +7 -delete
+  EOF
+
+  sudo chmod +x /usr/local/bin/{{ProjectLabel}}_backup.sh
+  ```
+
+> **Note:** `-mtime +7` means a retention period of **7 days**. Adjust as needed.
+
+- Open the crontab:
+  ```bash
+  crontab -e
+  ```
+- Add this line to run the backup at **00:00** and **12:00** UTC every day:
+  ```
+  0 0,12 * * * /usr/local/bin/{{ProjectLabel}}_backup.sh >/dev/null 2>&1
+  ```
+- Save and exit; cron will pick up the new schedule immediately.
+
+### Verify and monitor
+
+- Manually run the script once to confirm it works:
+  ```bash
+  /usr/local/bin/{{ProjectLabel}}_backup.sh
+  ls -l /home/deploy/backups/{{ProjectLabel}}_*.sql.gz
+  ```
+- If backups don’t appear as expected, check the logs with:
+  ```bash
+  grep CRON /var/log/syslog | grep '{{ProjectLabel}}_backup.sh'
+  ```
+
 ## DNS and Certbot Setup
 
 ### Configure DNS Records
