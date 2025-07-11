@@ -386,6 +386,9 @@
   ```bash
   sudo apt update
   sudo apt install -y postgresql postgresql-contrib
+  sudo mkdir -p /var/log/postgresql
+  sudo chown postgres:postgres /var/log/postgresql
+  sudo chmod 750 /var/log/postgresql
   ```
 
 - Enable and start the service:
@@ -432,15 +435,30 @@ sudo systemctl enable --now postgresql
   host      all     all         ::1/128         scram-sha-256
   ```
 
-### Lock Down Network Listeners
+### Enable Logging and Lock Down Network Listeners
 
-- Edit the main config to listen only on localhost and enforce SCRAM encryption:
+- Edit the main config:
   ```bash
   sudo nano /etc/postgresql/$PGVER/$CLUSTER/postgresql.conf
   ```
-
-- Ensure these lines are uncommented and set exactly:
+  
+- Uncomment and set all these values exactly:
   ```ini
+  logging_collector = on
+  
+  log_destination = 'stderr'
+  log_directory = '/var/log/postgresql'
+  log_filename = 'postgresql-%Y-%m-%d_%H%M%S.log'
+  log_file_mode = 0640
+  
+  log_truncate_on_rotation = on
+  log_rotation_age = 1d
+  log_rotation_size = 0
+  
+  log_min_error_statement = error
+  log_min_duration_statement = 500
+  log_line_prefix = '%m [%p] %q%u@%d '
+
   listen_addresses = 'localhost'
   password_encryption = scram-sha-256
   ```
@@ -935,6 +953,22 @@ This keeps log files from growing forever, rotating them daily and keeping 7 day
   }
   EOF
 
+  sudo tee /etc/logrotate.d/{{ProjectLabel}}-postgresql << 'EOF'
+  /var/log/postgresql/*.log {
+    weekly
+    missingok
+    rotate 4
+    compress
+    delaycompress
+    notifempty
+    create 640 postgres adm
+    sharedscripts
+    postrotate
+    systemctl reload postgresql > /dev/null
+    endscript
+  }
+  EOF
+
   sudo tee /etc/logrotate.d/fail2ban << 'EOF'
   /var/log/fail2ban.log {
       weekly
@@ -942,9 +976,9 @@ This keeps log files from growing forever, rotating them daily and keeping 7 day
       rotate 4
       compress
       delaycompress
-      copytruncate
       notifempty
       create 640 root adm
+      copytruncate
   }
   EOF
   ```
