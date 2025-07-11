@@ -911,3 +911,50 @@ sudo systemctl enable --now postgresql
   sudo systemctl status {{ProjectLabel}}
   journalctl -u {{ProjectLabel}} --no-pager
   ````
+
+
+## Log Rotation
+
+This keeps log files from growing forever, rotating them daily and keeping 7 days of history.
+
+### Create the config
+
+- Run:
+
+  ```bash
+  sudo tee /etc/logrotate.d/{{ProjectLabel}}-backups << 'EOF'
+  /home/deploy/backups/backup.log {
+      daily
+      missingok
+      rotate 7
+      compress
+      delaycompress
+      copytruncate
+      notifempty
+      create 640 deploy deploy
+  }
+  EOF
+
+  sudo tee /etc/logrotate.d/fail2ban << 'EOF'
+  /var/log/fail2ban.log {
+      weekly
+      missingok
+      rotate 4
+      compress
+      delaycompress
+      copytruncate
+      notifempty
+      create 640 root adm
+  }
+  EOF
+  ```
+
+> **Note:** NGINX ships with its own `logrotate` by default. You can customize it, but it's not necessary.
+
+- Verify the whole lot with a dry run and force a test rotation on one:
+  ```bash
+  sudo logrotate --debug /etc/logrotate.conf
+  sudo logrotate --force /etc/logrotate.d/{{ProjectLabel}}-nginx
+  ls -l /var/log/nginx/*.gz
+  ```
+  Ensure newly created rotated files match the create lines you set.
