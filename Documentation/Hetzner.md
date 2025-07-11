@@ -964,7 +964,7 @@ This keeps log files from growing forever, rotating them daily and keeping 7 day
     create 640 postgres adm
     sharedscripts
     postrotate
-    systemctl reload postgresql > /dev/null
+      systemctl reload postgresql > /dev/null
     endscript
   }
   EOF
