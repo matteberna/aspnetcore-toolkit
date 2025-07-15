@@ -691,30 +691,73 @@ sudo systemctl enable --now postgresql
 
 ### Define the PostgreSQL backup script
 
+- Edit or create the GPG agent config:
+  ```bash
+  nano /home/deploy/.gnupg/gpg-agent.conf
+  ```
+  Append the line `allow-loopback-pinentry` anywhere in the file.
+
+- Reload the GPG agent:
+  ```bash
+  gpgconf --reload gpg-agent
+  ```
+
 - Create the script and set permissions:
   ```bash
   sudo tee /usr/local/bin/{{ProjectLabel}}_backup.sh << 'EOF'
   #!/usr/bin/env bash
   export BACKUP_GPG_PASSPHRASE="{{BackupPassphrase}}"
   set -euo pipefail
+  
+  # Variables
   TIMESTAMP=$(date +%Y-%m-%dT%H%M)
   BACKUP_DIR=/home/deploy/backups
-  FILENAME="{{ProjectLabel}}_${TIMESTAMP}.sql.gz"
-  mkdir -p "${BACKUP_DIR}"
-  chmod 750 "${BACKUP_DIR}"
-  sudo -u postgres /usr/bin/pg_dump {{ProjectLabel}} | gzip > "${BACKUP_DIR}/${FILENAME}"
-  ENC_FILE="${BACKUP_DIR}/${FILENAME}.gpg"
+  AVATAR_DIR=/var/www/{{ProjectLabel}}/wwwroot/avatars
+  KEY_DIR=/var/keys/{{ProjectLabel}}
+  DB_PLAIN="$BACKUP_DIR/{{ProjectLabel}}_${TIMESTAMP}.sql.gz"
+  DB_ENC="$DB_PLAIN.gpg"
+  AVATAR_PLAIN="$BACKUP_DIR/avatars_${TIMESTAMP}.tar.gz"
+  KEYS_PLAIN="$BACKUP_DIR/dataprotectionkeys_${TIMESTAMP}.tar.gz"
+  KEYS_ENC="$KEYS_PLAIN.gpg"
+  mkdir -p "$BACKUP_DIR"
+  chmod 750 "$BACKUP_DIR"
+  
+  # Database dump (encrypted)
+  sudo -u postgres pg_dump {{ProjectLabel}} | gzip > "$DB_PLAIN"
   gpg --batch --yes \
+    --pinentry-mode loopback \
     --cipher-algo AES256 \
     --passphrase "$BACKUP_GPG_PASSPHRASE" \
-    --output "${ENC_FILE}" \
-    --symmetric "${BACKUP_DIR}/${FILENAME}"
-  rm -f "${BACKUP_DIR}/${FILENAME}"
-  find "${BACKUP_DIR}" -type f -name "{{ProjectLabel}}_*.sql.gz.gpg" -mtime +7 -delete
+    --output "$DB_ENC" \
+    --symmetric "$DB_PLAIN"
+  rm -f "$DB_PLAIN"
+  
+  # Avatars (public)
+  tar -czf "$AVATAR_PLAIN" -C "$AVATAR_DIR" .
+  
+  # DataProtection keys (encrypted)
+  tar -czf "$KEYS_PLAIN" -C "$KEY_DIR" .
+  gpg --batch --yes \
+  --pinentry-mode loopback \
+  --cipher-algo AES256 \
+  --passphrase "$BACKUP_GPG_PASSPHRASE" \
+  --output "$KEYS_ENC" \
+  --symmetric "$KEYS_PLAIN"
+  rm -f "$KEYS_PLAIN"
+  
+  # Pruning
+  find "$BACKUP_DIR" -type f \( \
+    -name "{{ProjectLabel}}_*.sql.gz.gpg" \
+    -o -name "dataprotectionkeys_*.tar.gz.gpg" \
+    \) -mtime +7 -delete
+  
+  find "$BACKUP_DIR" -type f -name "avatars_*.tar.gz" -mtime +7 -delete
   EOF
-
+  
   sudo chmod +x /usr/local/bin/{{ProjectLabel}}_backup.sh
   ```
+
+> **Note:** In this example, we're also saving the **/avatars** folder with user-generated content.
 
 > **Note:** `-mtime +7` means a retention period of **7 days**. Adjust as needed.
 
@@ -733,7 +776,7 @@ sudo systemctl enable --now postgresql
 - Manually run the script once to confirm it works:
   ```bash
   /usr/local/bin/{{ProjectLabel}}_backup.sh
-  ls -l /home/deploy/backups/{{ProjectLabel}}_*.sql.gz.gpg
+  ls -l /home/deploy/backups/
   ```
 - If backups don’t appear as expected, check the logs with:
   ```bash
