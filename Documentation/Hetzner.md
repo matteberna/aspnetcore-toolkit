@@ -564,6 +564,7 @@ sudo systemctl enable --now postgresql
       client_max_body_size 10M;
 
       error_page 502 503 504 /maintenance.html;
+  
       location = /maintenance.html {
           root /var/www/{{ProjectLabel}}/wwwroot;
           internal;
@@ -585,6 +586,12 @@ sudo systemctl enable --now postgresql
           proxy_connect_timeout 10s;
           proxy_send_timeout 30s;
           proxy_read_timeout 30s;
+      }
+  
+      location /health {
+        access_log off;
+        return 200 "healthy\n";
+        add_header Content-Type text/plain;
       }
   }
   ```
