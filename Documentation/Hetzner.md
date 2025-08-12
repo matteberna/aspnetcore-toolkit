@@ -459,6 +459,9 @@ sudo systemctl enable --now postgresql
   
   log_min_error_statement = error
   log_min_duration_statement = 500
+  log_checkpoints = on
+  log_connections = on
+  log_disconnections = on
   log_line_prefix = '%m [%p] %q%u@%d '
 
   listen_addresses = 'localhost'
