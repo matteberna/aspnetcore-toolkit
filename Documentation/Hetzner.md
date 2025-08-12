@@ -745,6 +745,18 @@ sudo systemctl enable --now postgresql
     --passphrase "$BACKUP_GPG_PASSPHRASE" \
     --output "$DB_ENC" \
     --symmetric "$DB_PLAIN"
+  
+  # Verification
+  if gpg --batch --decrypt --pinentry-mode loopback \
+    --passphrase "$BACKUP_GPG_PASSPHRASE" "$DB_ENC" 2>/dev/null \
+    | gunzip 2>/dev/null | head -n 1 | grep -q "PostgreSQL";
+  then
+    echo "$(date): Database backup verified successfully" >&2
+  else
+    echo "$(date): ERROR - Database backup verification failed!" >&2
+    exit 1
+  fi
+  
   rm -f "$DB_PLAIN"
   
   # Avatars (public)
