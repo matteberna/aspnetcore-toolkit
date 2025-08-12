@@ -743,7 +743,9 @@ sudo systemctl enable --now postgresql
   rm -f "$DB_PLAIN"
   
   # Avatars (public)
-  tar -czf "$AVATAR_PLAIN" -C "$AVATAR_DIR" .
+  if [ -d "$AVATAR_DIR" ]; then
+    tar -czf "$AVATAR_PLAIN" -C "$AVATAR_DIR" .
+  fi
   
   # DataProtection keys (encrypted)
   tar -czf "$KEYS_PLAIN" -C "$KEY_DIR" .
