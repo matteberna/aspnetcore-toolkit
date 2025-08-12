@@ -24,6 +24,7 @@
 | {{IpAddress}}        | The server's public IPv4 address                                | 103.86.98.1                            |
 | {{SqlPassword}}      | A strong, randomly generated password for the database          | f7Hp!9Lk2$Qx                           |
 | {{BackupPassphrase}} | A strong passphrase to use for encrypting backups               | Confound-Countdown-Browse-Shiny-Copper |
+| {{Email}}            | The address that will receive Certbot renewal notifications     | inbox@myproject.net                    |
 
 > **💡Tip:** Use your favorite editor’s "Find & Replace in Files" feature (typically Ctrl+Shift+F) for bulk swaps.
 
@@ -809,7 +810,7 @@ sudo systemctl enable --now postgresql
 - Install the Certbot certificate plugin:
   ```bash
   sudo apt install -y certbot python3-certbot-nginx
-  sudo certbot --nginx
+  sudo certbot --nginx --email {{Email}} --agree-tos
   ```
 
   This will show a few dialogs, choose to redirect HTTP → HTTPS when prompted.
