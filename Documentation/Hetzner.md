@@ -701,6 +701,8 @@ sudo systemctl enable --now postgresql
 
 - Edit or create the GPG agent config:
   ```bash
+  mkdir -p /home/deploy/.gnupg
+  chmod 700 /home/deploy/.gnupg
   nano /home/deploy/.gnupg/gpg-agent.conf
   ```
   Append the line `allow-loopback-pinentry` anywhere in the file.
