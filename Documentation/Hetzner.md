@@ -647,6 +647,10 @@ sudo systemctl enable --now postgresql
   ssl_ciphers HIGH:!aNULL:!MD5;
   ssl_prefer_server_ciphers on;
   
+  client_body_buffer_size 128k;
+  client_header_buffer_size 1k;
+  large_client_header_buffers 4 4k;
+  
   sendfile on;
   tcp_nopush on;
   tcp_nodelay on;
