@@ -32,26 +32,23 @@
 
 ### Generate & Secure SSH Credentials
 
-- on **Windows**, using either Git Bash or WSL:
+- On **Windows**, using either Git Bash or WSL:
   ```bash
   mkdir -p ~/.ssh
-  ssh-keygen.exe -t rsa -b 4096 -m PEM -f ~/.ssh/hetzner_project_key -N "" -C "deploy@windows"
+  ssh-keygen.exe -t ed25519 -f ~/.ssh/{{ProjectLabel}}_key -C "deploy@{{ProjectLabel}}"
   ```
 
-- on **Linux/macOS**:
+- On **Linux/macOS**:
   ```bash
   mkdir -p ~/.ssh && chmod 700 ~/.ssh
-  ssh-keygen -t rsa -b 4096 -m PEM -f ~/.ssh/hetzner_project_key -N '' -C "deploy@yourmachine"
-  chmod 600 ~/.ssh/hetzner_project_key
-  chmod 644 ~/.ssh/hetzner_project_key.pub
+  ssh-keygen -t ed25519 -f ~/.ssh/{{ProjectLabel}}_key -C "deploy@{{ProjectLabel}}"
+  chmod 600 ~/.ssh/{{ProjectLabel}}_key
+  chmod 644 ~/.ssh/{{ProjectLabel}}_key.pub
   ```
 
-> **Note:** The -C parameter is just a human-readable label, and you’re free to change it later without breaking
-> anything.
+- Upload `{{ProjectLabel}}_key` to an off-site secure vault (the public key can always be regenerated from it).
 
-- Upload `hetzner_project_key` to an off-site secure vault (the public key can always be regenerated from it).
-
-- Secure both passwords you've generated in the previous section, as well.
+- Secure the SSH passphrase and both passwords you've generated in the previous section, as well.
 
 ### Provision a VPS
 
@@ -88,7 +85,7 @@
   ServerAliveInterval 60
   IdentitiesOnly yes
   StrictHostKeyChecking ask
-  IdentityFile ~/.ssh/hetzner_project_key
+  IdentityFile ~/.ssh/{{ProjectLabel}}_key
   ```
 
 - Test the connection with `ssh {{ProjectLabel}}-prod`
