@@ -98,7 +98,7 @@
 
 - Run as root:
   ```bash
-  fallocate -l 2G /swapfile
+  fallocate -l 4G /swapfile
   chmod 600 /swapfile
   mkswap /swapfile
   swapon /swapfile
@@ -108,7 +108,7 @@
   sysctl --system
   ```  
 
-  This allocates a 2 GB swap file, restricts access, and sets the system to prefer RAM over swap.
+  This allocates a 4 GB swap file (~50% of the server's RAM), restricts access, and tweaks the kernel's memory management
 
 ### Set Hostname & Timezone
 
