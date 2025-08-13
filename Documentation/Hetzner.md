@@ -518,7 +518,7 @@ sudo systemctl enable --now postgresql
   ```json
   {
     "ConnectionStrings": {
-      "DefaultConnection": "Host=localhost;Database={{ProjectLabel}};UserId={{ProjectLabel}};Password={{SqlPassword}};"
+      "DefaultConnection": "Host=localhost;Database={{ProjectLabel}};UserId={{ProjectLabel}};Password={{SqlPassword}};Pooling=true;Minimum Pool Size=3;Maximum Pool Size=20;"
     }
   }
   ```
