@@ -54,6 +54,9 @@
 
 - You're going to need a machine with at least 2 dedicated vCPUs and 8 GB RAM.
 
+> **Note:** The numbers in this documentation are optimized for a machine with 8GB of RAM. For more powerful servers,
+> adjust them accordingly whenever recommended percentages are given.
+
 - Choose the latest **Ubuntu LTS** release (**24.04+** as of July 2025)
 
 - Avoid enabling the **IPv6 address**, which the application won't support.
@@ -453,6 +456,10 @@ sudo systemctl enable --now postgresql
 
   listen_addresses = 'localhost'
   password_encryption = scram-sha-256
+  
+  shared_buffers = 2GB  # 25% of RAM
+  effective_cache_size = 6GB  # 75% of RAM
+  maintenance_work_mem = 512MB
   ```
 
 - Reload PostgreSQL to pick up the edits:
