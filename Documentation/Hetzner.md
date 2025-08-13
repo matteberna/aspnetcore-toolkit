@@ -159,7 +159,6 @@
   ufw default deny incoming
   ufw default allow outgoing
   ufw allow OpenSSH
-  ufw allow 'Nginx Full'
   sed -i 's/^IPV6=.*/IPV6=no/' /etc/ufw/ufw.conf
   ufw reload
   ufw --force enable
@@ -846,6 +845,12 @@ sudo systemctl enable --now postgresql
   ```
 
   This will show a few dialogs, choose to redirect HTTP → HTTPS when prompted.
+
+- Add firewall rules for NGINX:
+  ```bash
+  sudo ufw allow 'Nginx Full'
+  sudo ufw reload
+  ```
 
 - Check NGINX syntax and confirm that the site is serving valid TLS:
   ```bash
