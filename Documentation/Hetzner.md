@@ -573,7 +573,7 @@ sudo systemctl enable --now postgresql
       }
 
       location / {
-          limit_req zone=one burst=10 nodelay;
+          limit_req zone=one burst=20 nodelay;
           proxy_pass http://localhost:5000;
           proxy_http_version 1.1;
           proxy_set_header Upgrade $http_upgrade;
@@ -661,7 +661,7 @@ sudo systemctl enable --now postgresql
       ''        close;
   }
 
-  limit_req_zone $binary_remote_addr zone=one:10m rate=5r/s;
+  limit_req_zone $binary_remote_addr zone=one:10m rate=10r/s;
 
   brotli on;
   brotli_comp_level 6;
