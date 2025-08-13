@@ -1051,7 +1051,7 @@ This keeps log files from growing forever, rotating them daily and keeping 7 day
     compress
     delaycompress
     notifempty
-    create 640 postgres adm
+    create 640 postgres postgres
     sharedscripts
     postrotate
       systemctl reload postgresql > /dev/null
