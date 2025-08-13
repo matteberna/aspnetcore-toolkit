@@ -240,9 +240,9 @@
   filter   = nginx-errors
   port     = http,https
   logpath  = /var/log/nginx/access.log
-  maxretry = 10
-  findtime = 600
-  bantime  = 3600
+  maxretry = 30
+  findtime = 60
+  bantime  = 600
   EOF
   ```
 
