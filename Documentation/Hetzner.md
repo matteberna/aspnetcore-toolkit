@@ -768,11 +768,11 @@ sudo systemctl enable --now postgresql
   # DataProtection keys (encrypted)
   tar -czf "$KEYS_PLAIN" -C "$KEY_DIR" .
   gpg --batch --yes \
-  --pinentry-mode loopback \
-  --cipher-algo AES256 \
-  --passphrase "$BACKUP_GPG_PASSPHRASE" \
-  --output "$KEYS_ENC" \
-  --symmetric "$KEYS_PLAIN"
+    --pinentry-mode loopback \
+    --cipher-algo AES256 \
+    --passphrase "$BACKUP_GPG_PASSPHRASE" \
+    --output "$KEYS_ENC" \
+    --symmetric "$KEYS_PLAIN"
   rm -f "$KEYS_PLAIN"
   
   # Pruning
@@ -782,6 +782,10 @@ sudo systemctl enable --now postgresql
     \) -mtime +7 -delete
   
   find "$BACKUP_DIR" -type f -name "avatars_*.tar.gz" -mtime +7 -delete
+  
+  if [ $? -ne 0 ]; then
+    echo "Backup failed at $(date)" | mail -s "{{ProjectLabel}} Backup Failed" {{Email}}
+  fi
   EOF
   
   sudo chmod +x /usr/local/bin/{{ProjectLabel}}_backup.sh
