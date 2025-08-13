@@ -644,6 +644,9 @@ sudo systemctl enable --now postgresql
   real_ip_header     X-Forwarded-For;
   real_ip_recursive  on;
   
+  access_log /var/log/nginx/access.log;
+  error_log /var/log/nginx/error.log warn;
+  
   client_header_timeout 10s;
   client_body_timeout 10s;
   send_timeout 10s;
