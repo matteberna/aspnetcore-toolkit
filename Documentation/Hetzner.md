@@ -853,6 +853,15 @@ sudo systemctl enable --now postgresql
 
 > **Note:** We don't care about plain HTTP and this isn't a wildcard cert, which would need separate DNS verification.
 
+- Add OCSP stapling, which is an SSL performance optimization:
+  ```bash
+  sudo openssl ocsp -no_nonce \
+      -responder http://ocsp.int-x3.letsencrypt.org \
+      -verify_other /etc/letsencrypt/live/{{Domain}}/chain.pem \
+      -issuer /etc/letsencrypt/live/{{Domain}}/chain.pem \
+      -cert /etc/letsencrypt/live/{{Domain}}/cert.pem \
+      -text
+  ```
 ### Enable Automatic Renewal
 
 * If the tests above succeeded, create a renewal hook:
@@ -974,7 +983,6 @@ sudo systemctl enable --now postgresql
   Environment=ASPNETCORE_URLS=http://localhost:5000
   Environment=ASPNETCORE_ENVIRONMENT=Production
   Environment=DOTNET_PRINT_TELEMETRY_MESSAGE=false
-  MemoryMax=6G
   CPUQuota=200%
   KillMode=mixed
   KillSignal=SIGTERM
