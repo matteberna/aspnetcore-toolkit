@@ -296,7 +296,7 @@
   PermitEmptyPasswords no
   ChallengeResponseAuthentication no
   MaxAuthTries 3
-  MaxSessions 1
+  MaxSessions 2
   UsePAM yes
   X11Forwarding no
   AllowTcpForwarding no
