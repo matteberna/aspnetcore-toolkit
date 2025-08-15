@@ -720,6 +720,13 @@ sudo systemctl enable --now postgresql
 
 ### Define the PostgreSQL backup script
 
+- Crease a secure passphrase file:
+  ```bash
+  echo "{{BackupPassphrase}}" | sudo tee /home/deploy/.backup_passphrase > /dev/null
+  sudo chown deploy:deploy /home/deploy/.backup_passphrase
+  sudo chmod 600 /home/deploy/.backup_passphrase
+  ```
+
 - Edit or create the GPG agent config:
   ```bash
   mkdir -p /home/deploy/.gnupg
@@ -737,9 +744,15 @@ sudo systemctl enable --now postgresql
   ```bash
   sudo tee /usr/local/bin/{{ProjectLabel}}_backup.sh << 'EOF'
   #!/usr/bin/env bash
-  export BACKUP_GPG_PASSPHRASE="{{BackupPassphrase}}"
   set -euo pipefail
   
+  # Read passphrase from secure file
+  if [[ ! -f /home/deploy/.backup_passphrase ]]; then
+  echo "$(date): ERROR - Backup passphrase file not found!" >&2
+  exit 1
+  fi
+  BACKUP_GPG_PASSPHRASE=$(cat /home/deploy/.backup_passphrase)
+
   # Variables
   TIMESTAMP=$(date +%Y-%m-%dT%H%M)
   BACKUP_DIR=/home/deploy/backups
@@ -789,7 +802,10 @@ sudo systemctl enable --now postgresql
     --output "$KEYS_ENC" \
     --symmetric "$KEYS_PLAIN"
   rm -f "$KEYS_PLAIN"
-  
+
+  # Clear passphrase from memory
+  unset BACKUP_GPG_PASSPHRASE
+
   # Pruning
   find "$BACKUP_DIR" -type f \( \
     -name "{{ProjectLabel}}_*.sql.gz.gpg" \
