@@ -462,6 +462,8 @@ sudo systemctl enable --now postgresql
   effective_cache_size = 6GB  # 75% of RAM
   maintenance_work_mem = 512MB
   ```
+  
+> **Note:** [PGTune](https://pgtune.leopard.in.ua/) is a great tool for fine-tuning your PostgreSQL configuration.
 
 - Reload PostgreSQL to pick up the edits:
   ```bash
@@ -607,6 +609,8 @@ sudo systemctl enable --now postgresql
   ```
 
 > **Note:** The SSL directives referenced here are placeholders.
+
+> **Note:** Strict-Transport-Security is a long term commitment. HTTPS will be required on all subdomains.
 
 - Generate a 2048-bit DH param file (takes a minute):
   ```bash
