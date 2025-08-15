@@ -299,6 +299,8 @@
   MaxSessions 1
   UsePAM yes
   X11Forwarding no
+  AllowTcpForwarding no
+  PermitTunnel no
   ```
 
 * For scripting purposes, allow **deploy** to run `pg_dump` without a password prompt:
