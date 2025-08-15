@@ -458,7 +458,7 @@ sudo systemctl enable --now postgresql
   listen_addresses = 'localhost'
   password_encryption = scram-sha-256
   
-  shared_buffers = 2GB  # 25% of RAM
+  shared_buffers = 1GB  # Optimize as needed
   effective_cache_size = 6GB  # 75% of RAM
   maintenance_work_mem = 512MB
   ```
