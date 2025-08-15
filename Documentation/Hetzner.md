@@ -720,7 +720,7 @@ sudo systemctl enable --now postgresql
 
 ### Define the PostgreSQL backup script
 
-- Crease a secure passphrase file:
+- Create a secure passphrase file:
   ```bash
   echo "{{BackupPassphrase}}" | sudo tee /home/deploy/.backup_passphrase > /dev/null
   sudo chown deploy:deploy /home/deploy/.backup_passphrase
@@ -1113,10 +1113,8 @@ This keeps log files from growing forever, rotating them daily and keeping 7 day
 
 > **Note:** NGINX ships with its own `logrotate` by default. You can customize it, but it's not necessary.
 
-- Verify the whole lot with a dry run and force a test rotation on one:
+- Verify the whole lot with a dry:
   ```bash
   sudo logrotate --debug /etc/logrotate.conf
-  sudo logrotate --force /etc/logrotate.d/{{ProjectLabel}}-nginx
-  ls -l /var/log/nginx/*.gz
   ```
   Ensure newly created rotated files match the create lines you set.
