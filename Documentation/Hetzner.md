@@ -616,6 +616,12 @@ sudo systemctl enable --now postgresql
 
 > **Note:** Strict-Transport-Security is a long term commitment. HTTPS will be required on all subdomains.
 
+- Add firewall rules for NGINX:
+  ```bash
+  sudo ufw allow 'Nginx Full'
+  sudo ufw reload
+  ```
+
 - Generate a 2048-bit DH param file (takes a minute):
   ```bash
   sudo openssl dhparam -out /etc/ssl/certs/dhparam.pem 2048
@@ -872,12 +878,6 @@ sudo systemctl enable --now postgresql
   ```
 
   This will show a few dialogs, choose to redirect HTTP → HTTPS when prompted.
-
-- Add firewall rules for NGINX:
-  ```bash
-  sudo ufw allow 'Nginx Full'
-  sudo ufw reload
-  ```
 
 - Check NGINX syntax and confirm that the site is serving valid TLS:
   ```bash
