@@ -164,6 +164,8 @@
   ufw --force enable
   ufw status verbose
   ```
+  
+> **Note:** We're disabling IPv6 to simplify configuration, since the application won't use it.
 
 ### Install and Configure Core Security Packages
 
