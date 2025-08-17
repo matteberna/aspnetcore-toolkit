@@ -483,6 +483,8 @@ sudo systemctl enable --now postgresql
     ENCODING 'UTF8';
   GRANT ALL PRIVILEGES ON DATABASE {{ProjectLabel}} TO {{ProjectLabel}};
   EOF
+  
+  history -c && history -w
   ```
 
 ### PostgreSQL Backup Restoration
