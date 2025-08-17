@@ -749,6 +749,7 @@ sudo systemctl enable --now postgresql
   sudo tee /usr/local/bin/{{ProjectLabel}}_backup.sh << 'EOF'
   #!/usr/bin/env bash
   set -euo pipefail
+  trap 'rm -f "$DB_PLAIN" "$KEYS_PLAIN"' ERR
   
   # Read passphrase from secure file
   if [[ ! -f /home/deploy/.backup_passphrase ]]; then
