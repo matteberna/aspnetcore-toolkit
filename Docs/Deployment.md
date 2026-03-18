@@ -390,6 +390,8 @@
   sudo chown -R deploy:web /var/www/{{ProjectLabel}}
   sudo find /var/www/{{ProjectLabel}} -type d -exec chmod 2775 {} \;
   sudo find /var/www/{{ProjectLabel}} -type f -exec chmod 664 {} \;
+  sudo mkdir -p /var/www/{{ProjectLabel}}/logs
+  sudo chown deploy:web /var/www/{{ProjectLabel}}/logs
   ```
 
   This ensures new files are also inheriting the web group.
