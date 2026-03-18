@@ -812,55 +812,60 @@ sudo systemctl enable --now postgresql
   sudo tee /usr/local/bin/{{ProjectLabel}}_backup.sh << 'EOF'
   #!/usr/bin/env bash
   set -euo pipefail
-  trap 'rm -f "$DB_PLAIN" "$KEYS_PLAIN"; echo "Backup failed at $(date)" | mail -s "{{ProjectLabel}} Backup Failed" {{OpsEmail}}' ERR
-  
-  # Read passphrase from secure file
-  if [[ ! -f /home/deploy/.backup_passphrase ]]; then
-  echo "$(date): ERROR - Backup passphrase file not found!" >&2
-  exit 1
-  fi
-  BACKUP_GPG_PASSPHRASE=$(cat /home/deploy/.backup_passphrase)
 
   # Variables
-  TIMESTAMP=$(date +%Y-%m-%dT%H%M)
-  BACKUP_DIR=/home/deploy/backups
-  AVATAR_DIR=/var/www/{{ProjectLabel}}/wwwroot/avatars
-  KEY_DIR=/var/keys/{{ProjectLabel}}
-  DB_PLAIN="$BACKUP_DIR/{{ProjectLabel}}_${TIMESTAMP}.sql.gz"
+  PROJECT="{{ProjectLabel}}"
+  BACKUP_DIR="/home/deploy/backups"
+  PASSPHRASE_FILE="/home/deploy/.backup_passphrase"
+  AVATAR_DIR="/var/www/${PROJECT}/wwwroot/avatars"
+  KEY_DIR="/var/keys/${PROJECT}"
+
+  TIMESTAMP=$(date -u +%Y-%m-%dT%H%M)
+  DB_PLAIN="$BACKUP_DIR/${PROJECT}_${TIMESTAMP}.sql.gz"
   DB_ENC="$DB_PLAIN.gpg"
   AVATAR_PLAIN="$BACKUP_DIR/avatars_${TIMESTAMP}.tar.gz"
   KEYS_PLAIN="$BACKUP_DIR/dataprotectionkeys_${TIMESTAMP}.tar.gz"
   KEYS_ENC="$KEYS_PLAIN.gpg"
+
+  trap 'rm -f "$DB_PLAIN" "$KEYS_PLAIN"; echo "Backup failed at $(date -u)" | mail -s "${PROJECT} Backup Failed" {{OpsEmail}}' ERR
+
+  # Read passphrase from secure file
+  if [[ ! -f "$PASSPHRASE_FILE" ]]; then
+    echo "$(date -u): ERROR - Backup passphrase file not found!" >&2
+    exit 1
+  fi
+  BACKUP_GPG_PASSPHRASE=$(cat "$PASSPHRASE_FILE")
+
   mkdir -p "$BACKUP_DIR"
   chmod 750 "$BACKUP_DIR"
-  
+
   # Database dump (encrypted)
-  sudo -u postgres pg_dump {{ProjectLabel}} | gzip > "$DB_PLAIN"
+  sudo -u postgres pg_dump "$PROJECT" --no-owner --no-privileges | gzip > "$DB_PLAIN"
   gpg --batch --yes \
     --pinentry-mode loopback \
     --cipher-algo AES256 \
     --passphrase "$BACKUP_GPG_PASSPHRASE" \
     --output "$DB_ENC" \
     --symmetric "$DB_PLAIN"
-  
-  # Verification
+
+  # Verification (decrypt + gzip integrity test)
   if gpg --batch --decrypt --pinentry-mode loopback \
     --passphrase "$BACKUP_GPG_PASSPHRASE" "$DB_ENC" 2>/dev/null \
-    | gunzip 2>/dev/null | head -n 1 | grep -q "PostgreSQL";
+    | gunzip -t 2>/dev/null;
   then
-    echo "$(date): Database backup verified successfully" >&2
+    echo "$(date -u): Database backup verified successfully" >&2
   else
-    echo "$(date): ERROR - Database backup verification failed!" >&2
+    echo "$(date -u): ERROR - Database backup verification failed!" >&2
     exit 1
   fi
-  
+
   rm -f "$DB_PLAIN"
-  
+
   # Avatars (public)
   if [ -d "$AVATAR_DIR" ]; then
     tar -czf "$AVATAR_PLAIN" -C "$AVATAR_DIR" .
   fi
-  
+
   # DataProtection keys (encrypted)
   tar -czf "$KEYS_PLAIN" -C "$KEY_DIR" .
   gpg --batch --yes \
@@ -874,13 +879,15 @@ sudo systemctl enable --now postgresql
   # Clear passphrase from memory
   unset BACKUP_GPG_PASSPHRASE
 
-  # Pruning
+  # Pruning (14-day retention)
   find "$BACKUP_DIR" -type f \( \
-    -name "{{ProjectLabel}}_*.sql.gz.gpg" \
+    -name "${PROJECT}_*.sql.gz.gpg" \
     -o -name "dataprotectionkeys_*.tar.gz.gpg" \
-    \) -mtime +7 -delete
-  
-  find "$BACKUP_DIR" -type f -name "avatars_*.tar.gz" -mtime +7 -delete
+    \) -mtime +14 -delete
+
+  find "$BACKUP_DIR" -type f -name "avatars_*.tar.gz" -mtime +14 -delete
+
+  echo "$(date -u): Backup complete" >&2
   EOF
   
   sudo chmod +x /usr/local/bin/{{ProjectLabel}}_backup.sh
@@ -888,7 +895,7 @@ sudo systemctl enable --now postgresql
 
 > **Note:** In this example, we're also saving the **/avatars** folder with user-generated content.
 
-> **Note:** `-mtime +7` means a retention period of **7 days**. Adjust as needed.
+> **Note:** `-mtime +14` means a retention period of **14 days**. Adjust as needed.
 
 - Open the crontab:
   ```bash
