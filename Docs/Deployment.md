@@ -489,6 +489,7 @@ sudo systemctl enable --now postgresql
   listen_addresses = 'localhost'
   password_encryption = scram-sha-256
   
+  max_connections = 200  # default 100 may not survive bot spikes
   shared_buffers = 4GB  # ~25% of RAM
   effective_cache_size = 12GB  # ~75% of RAM
   maintenance_work_mem = 1GB
