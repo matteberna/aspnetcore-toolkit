@@ -2,7 +2,7 @@
 
 ## Assumptions
 
-- You’re provisioning a VPS on **Hetzner**. Other providers may have different defaults.
+- You’re provisioning a VPS on **Netcup**. Other providers may have different defaults.
 
 - You're not changing the default port for SSH, which is 22.
 
@@ -66,7 +66,7 @@
 > **Note:** The numbers in this documentation are optimized for a machine with 8GB of RAM. For more powerful servers,
 > adjust them accordingly whenever recommended percentages are given.
 
-- Choose the latest **Ubuntu LTS** release (**24.04+** as of July 2025)
+- Choose the latest **Debian** stable release (**13 Trixie+**) or **Ubuntu LTS** (**24.04+**)
 
 - Avoid enabling the **IPv6 address**, which the application won't support.
 
@@ -75,8 +75,8 @@
 > **Note:** Automatic backups give you easy rollback points in case something goes wrong, but they also increase the
 > server's monthly cost by 20%. Since we're going to set up database backups, these aren't strictly necessary.
 
-- On your first connection, verify the server’s host key fingerprint against the one shown in the Hetzner console, which
-  is the string in the format `sha256:XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX`.
+- On your first connection, verify the server’s host key fingerprint against the one shown in the provider's console,
+  which is the string in the format `sha256:XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX`.
 
 ### Configure The SSH Client (Windows)
 
@@ -843,7 +843,7 @@ sudo systemctl enable --now postgresql
   ```
 - If backups don’t appear as expected, check the logs with:
   ```bash
-  grep CRON /var/log/syslog | grep '{{ProjectLabel}}_backup.sh'
+  journalctl -u cron | grep '{{ProjectLabel}}_backup.sh'
   ```
 
 ## DNS and Certbot Setup
