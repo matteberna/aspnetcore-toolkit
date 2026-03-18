@@ -832,6 +832,7 @@ sudo systemctl enable --now postgresql
 - Add this line to run the backup at **00:00** and **12:00** UTC every day, with basic monitoring:
   ```
   0 0,12 * * * /usr/local/bin/{{ProjectLabel}}_backup.sh >> /home/deploy/backups/backup.log 2>&1
+  0 3 * * * find /var/log/postgresql -name "postgresql-*.log" -mtime +7 -delete
   0 8 * * * df -h | grep -E '^/dev/' | awk '$5+0 > 80 {print "Disk usage warning: " $0}' | mail -s "Disk Space Alert" {{Email}}
   ```
 - Save and exit; cron will pick up the new schedule immediately.
@@ -1124,22 +1125,6 @@ This keeps log files from growing forever, rotating them daily and keeping 7 day
       copytruncate
       notifempty
       create 640 deploy deploy
-  }
-  EOF
-
-  sudo tee /etc/logrotate.d/{{ProjectLabel}}-postgresql << 'EOF'
-  /var/log/postgresql/*.log {
-    weekly
-    missingok
-    rotate 4
-    compress
-    delaycompress
-    notifempty
-    create 640 postgres postgres
-    sharedscripts
-    postrotate
-      systemctl reload postgresql > /dev/null
-    endscript
   }
   EOF
 
