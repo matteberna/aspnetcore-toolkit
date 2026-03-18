@@ -588,6 +588,28 @@ sudo systemctl enable --now postgresql
   \q
   ```
 
+### Restore Avatars and DataProtection Keys
+
+- To restore avatars from a backup archive (unencrypted):
+  ```bash
+  sudo mkdir -p /var/www/{{ProjectLabel}}/wwwroot/avatars
+  sudo tar -xzf /home/deploy/backups/avatars_YYYY-MM-DDTHHMM.tar.gz \
+    -C /var/www/{{ProjectLabel}}/wwwroot/avatars
+  sudo chown -R deploy:web /var/www/{{ProjectLabel}}/wwwroot/avatars
+  ```
+
+- To restore DataProtection keys (GPG-encrypted):
+  ```bash
+  gpg --batch --decrypt --pinentry-mode loopback \
+    --passphrase "$(cat /home/deploy/.backup_passphrase)" \
+    /home/deploy/backups/dataprotectionkeys_YYYY-MM-DDTHHMM.tar.gz.gpg \
+    | sudo tar -xzf - -C /var/keys/{{ProjectLabel}}
+  sudo chown -R deploy:web /var/keys/{{ProjectLabel}}
+  ```
+
+> **⚠️Caution:** Without the DataProtection keys, existing authentication cookies and anti-forgery tokens become
+> invalid — users will be logged out and forms may break.
+
 - Verify the project's `appsettings.Production.json` file has the correct connection string:
   ```json
   {
