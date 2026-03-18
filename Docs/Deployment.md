@@ -300,7 +300,7 @@
   PermitRootLogin no
   PasswordAuthentication no
   PermitEmptyPasswords no
-  ChallengeResponseAuthentication no
+  KbdInteractiveAuthentication no
   MaxAuthTries 3
   MaxSessions 5
   UsePAM yes
