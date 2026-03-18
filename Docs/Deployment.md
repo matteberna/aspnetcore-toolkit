@@ -514,25 +514,25 @@ sudo systemctl enable --now postgresql
 
 ### PostgreSQL Backup Restoration
 
-- Create a dedicated backups folder:
+- Upload your custom-format dump (`.dump`) to the server and move it to `/var/backups`:
   ```bash
-  sudo mkdir -p /home/deploy/backups
-  sudo chmod 750 /home/deploy/backups
+  sudo mkdir -p /var/backups
+  sudo mv /home/deploy/backups/{{ProjectLabel}}.dump /var/backups/
+  sudo chown postgres:postgres /var/backups/{{ProjectLabel}}.dump
   ```
 
-- Upload your dump (named exactly `{{ProjectLabel}}.sql` or `.sql.gz`) into `/home/deploy/backups`.
-
-- Import the dump:
+- Restore the dump. The `--role` flag ensures all objects are created as the app user, preventing
+  ownership issues:
   ```bash
-  # Uncompressed .sql
-  sudo chown postgres:postgres /home/deploy/backups/{{ProjectLabel}}.sql
-  sudo -u postgres psql --single-transaction {{ProjectLabel}} \
-    < /home/deploy/backups/{{ProjectLabel}}.sql
+  sudo -u postgres dropdb --if-exists {{ProjectLabel}}
+  sudo -u postgres createdb --owner={{ProjectLabel}} {{ProjectLabel}}
 
-  # If compressed (.sql.gz)
-  sudo chown postgres:postgres /home/deploy/backups/{{ProjectLabel}}.sql.gz
-  gunzip -c /home/deploy/backups/{{ProjectLabel}}.sql.gz \
-    | sudo -u postgres psql --single-transaction {{ProjectLabel}}
+  sudo -u postgres pg_restore \
+    --dbname={{ProjectLabel}} \
+    --role={{ProjectLabel}} \
+    --single-transaction \
+    --clean --if-exists \
+    /var/backups/{{ProjectLabel}}.dump
   ```
 
 - Verify tables were created:
@@ -544,11 +544,41 @@ sudo systemctl enable --now postgresql
 - Dispose of the unencrypted dump:
   ```bash
   # Simple deletion
-  sudo rm -f /home/deploy/backups/{{ProjectLabel}}.sql /home/deploy/backups/{{ProjectLabel}}.sql.gz
-  
+  sudo rm -f /var/backups/{{ProjectLabel}}.dump
+
   # Advanced shred (optional, for sensitive data)
   # sudo apt install -y secure-delete
-  # sudo srm -vz /home/deploy/backups/{{ProjectLabel}}.sql*
+  # sudo srm -vz /var/backups/{{ProjectLabel}}.dump
+  ```
+
+### Fix Permissions After Restore
+
+> **Note:** If you used `--role` above, this section shouldn't be necessary. It's here as a
+> troubleshooting reference in case objects end up owned by `postgres` after a restore.
+
+- Grant the app user access to all objects:
+  ```bash
+  sudo -u postgres psql {{ProjectLabel}}
+  ```
+
+  ```sql
+  -- public schema
+  GRANT ALL ON SCHEMA public TO {{ProjectLabel}};
+  GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO {{ProjectLabel}};
+  GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO {{ProjectLabel}};
+  GRANT ALL PRIVILEGES ON ALL FUNCTIONS IN SCHEMA public TO {{ProjectLabel}};
+
+  -- hangfire schema (if present)
+  GRANT USAGE, CREATE ON SCHEMA hangfire TO {{ProjectLabel}};
+  GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA hangfire TO {{ProjectLabel}};
+  GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA hangfire TO {{ProjectLabel}};
+
+  -- defaults for future objects
+  ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO {{ProjectLabel}};
+  ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON SEQUENCES TO {{ProjectLabel}};
+  ALTER DEFAULT PRIVILEGES IN SCHEMA hangfire GRANT ALL ON TABLES TO {{ProjectLabel}};
+  ALTER DEFAULT PRIVILEGES IN SCHEMA hangfire GRANT ALL ON SEQUENCES TO {{ProjectLabel}};
+  \q
   ```
 
 - Verify the project's `appsettings.Production.json` file has the correct connection string:
