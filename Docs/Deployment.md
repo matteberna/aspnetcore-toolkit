@@ -974,6 +974,21 @@ sudo systemctl enable --now postgresql
   curl -I https://{{Domain}}
   ```
 
+### Testing Before DNS Cutover
+
+> **⚠️Caution:** Don't test HTTPS by IP (`https://{{ServerIp}}`) — the certificate is issued for
+> `{{Domain}}`/`{{WwwDomain}}` and won't match.
+
+- **Option A: hosts file override** — add to your local hosts file, then browse to `https://{{WwwDomain}}` normally:
+  ```text
+  {{ServerIp}} {{Domain}} {{WwwDomain}}
+  ```
+
+- **Option B: curl `--resolve`** — quick CLI check without touching your hosts file:
+  ```bash
+  curl -Ik https://{{WwwDomain}} --resolve {{WwwDomain}}:443:{{ServerIp}}
+  ```
+
 ### Enable Automatic Renewal
 
 * If the tests above succeeded, create a renewal hook:
