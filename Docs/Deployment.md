@@ -266,12 +266,10 @@
 
 > **❓Why:** Using a different user for day-to-day operations reduces risk if credentials are compromised.
 
-- Create the **deploy** user with a strong password:
+- Create the **deploy** user (you'll be prompted for a password):
   ```bash
-  useradd -m -s /bin/bash deploy
+  adduser deploy
   usermod -aG sudo deploy
-  chage -m 0 -M 99999 deploy
-  passwd deploy
   ```
 
 - Record the password in your secure vault.
@@ -307,6 +305,10 @@
   ```
 
   Ensure the following are uncommented and set exactly:
+
+  > **💡Tip:** During a migration, you can temporarily use `PermitRootLogin prohibit-password` instead of `no` to keep
+  > key-only root access as a fallback. Switch to `no` once everything is stable.
+
   ```
   AllowUsers deploy
   PermitRootLogin no
