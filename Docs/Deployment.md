@@ -21,17 +21,19 @@
 | {{ProjectName}}      | The full project name in Pascal case (matches the C# solution)  | MyLatestProject                              |
 | {{ProjectLabel}}     | Short label for services and filenames (lowercase, single word) | project                                      |
 | {{Domain}}           | Root domain (no protocols, www, or subdomains)                  | myproject.net                                |
-| {{IpAddress}}        | The server's public IPv4 address                                | 103.86.98.1                                  |
-| {{SqlPassword}}      | A strong, randomly generated password for the database          | f7Hp!9Lk2$Qx                                 |
+| {{WwwDomain}}        | Canonical host (www subdomain)                                  | www.myproject.net                            |
+| {{ServerIp}}         | The server's public IPv4 address                                | 103.86.98.1                                  |
+| {{DbPassword}}       | A strong, randomly generated password for the database          | f7Hp!9Lk2$Qx                                 |
 | {{BackupPassphrase}} | A strong passphrase to use for encrypting backups               | Confound-Countdown-Browse-Shiny-Copper       |
 | {{SesId}}            | Amazon SES access key ID                                        | AKIAIOSFODNN7EXAMPLE                         |
 | {{SesSecret}}        | Amazon SES secret access key                                    | wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY     |
 | {{SesRegion}}        | Amazon SES selected region                                      | eu-west-1                                    |
 | {{SmtpEndpoint}}     | SMTP endpoint for the region specified above                    | email-smtp.eu-west-1.amazonaws.com           |
 | {{SmtpEmail}}        | Sender address from a **verified** domain                       | mailer@myproject.net                         |
-| {{SmtpUsername}}     | SMTP username (new account created on Amazon SES)               | AKIAIOSFODNN7EXAMPLE                         |
-| {{SmtpPassword}}     | SMTP password for the account above                             | je7MtGbClwBF/2Zp9Utk/h3yCo8nvbEXAMPLEKEY |
-| {{Email}}            | The address that will receive various notifications             | inbox@myproject.net                          |
+| {{SesSmtpUser}}      | SES SMTP username (created on Amazon SES)                       | AKIAIOSFODNN7EXAMPLE                         |
+| {{SesSmtpPassword}}  | SES SMTP password for the account above                         | je7MtGbClwBF/2Zp9Utk/h3yCo8nvbEXAMPLEKEY |
+| {{OpsEmail}}         | Mailbox receiving server alerts (disk, backups, etc.)           | ops@myproject.net                            |
+| {{CertbotEmail}}     | Mailbox for Let's Encrypt renewal notices                       | certs@myproject.net                          |
 
 > **💡Tip:** Use your favorite editor’s "Find & Replace in Files" feature (typically Ctrl+Shift+F) for bulk swaps.
 
@@ -80,7 +82,7 @@
 
 - Launch MobaXTerm.
 - Add a new "Session → SSH" entry
-- Remote Host: `{{IpAddress}}` , Specify username: `root`, Port: `22`
+- Remote Host: `{{ServerIp}}` , Specify username: `root`, Port: `22`
 - Advanced SSH Settings → Use private key: point to your downloaded key
 
 ### Configure The SSH Client (macOS/Linux)
@@ -88,7 +90,7 @@
 - Add to your `~/.ssh/config`:
   ```ssh
   Host {{ProjectLabel}}-prod
-  HostName {{IpAddress}}
+  HostName {{ServerIp}}
   User root
   ServerAliveInterval 60
   IdentitiesOnly yes
@@ -284,7 +286,7 @@
 
 - In a new session, verify you can SSH in as **deploy**:
   ```bash
-  ssh deploy@{{IpAddress}}
+  ssh deploy@{{ServerIp}}
   ```
 
 ### Lock Down SSHD
@@ -388,7 +390,7 @@
   ```bash
   rsync -avz --delete \
   ./bin/Release/net*/linux-*/publish/ \
-  deploy@{{IpAddress}}:/var/www/{{ProjectLabel}}/
+  deploy@{{ServerIp}}:/var/www/{{ProjectLabel}}/
   ```
 
 ## PostgreSQL Installation & Configuration
@@ -486,7 +488,7 @@ sudo systemctl enable --now postgresql
   sudo -u postgres psql -v ON_ERROR_STOP=1 << EOF
   CREATE ROLE {{ProjectLabel}} 
     LOGIN 
-    PASSWORD '{{SqlPassword}}';
+    PASSWORD '{{DbPassword}}';
   CREATE DATABASE {{ProjectLabel}} 
     OWNER {{ProjectLabel}} 
     ENCODING 'UTF8';
@@ -539,7 +541,7 @@ sudo systemctl enable --now postgresql
   ```json
   {
     "ConnectionStrings": {
-      "DefaultConnection": "Host=localhost;Database={{ProjectLabel}};UserId={{ProjectLabel}};Password={{SqlPassword}};Pooling=true;Minimum Pool Size=3;Maximum Pool Size=20;"
+      "DefaultConnection": "Host=localhost;Database={{ProjectLabel}};UserId={{ProjectLabel}};Password={{DbPassword}};Pooling=true;Minimum Pool Size=3;Maximum Pool Size=20;"
     }
   }
   ```
@@ -742,7 +744,7 @@ sudo systemctl enable --now postgresql
   sudo tee /usr/local/bin/{{ProjectLabel}}_backup.sh << 'EOF'
   #!/usr/bin/env bash
   set -euo pipefail
-  trap 'rm -f "$DB_PLAIN" "$KEYS_PLAIN"; echo "Backup failed at $(date)" | mail -s "{{ProjectLabel}} Backup Failed" {{Email}}' ERR
+  trap 'rm -f "$DB_PLAIN" "$KEYS_PLAIN"; echo "Backup failed at $(date)" | mail -s "{{ProjectLabel}} Backup Failed" {{OpsEmail}}' ERR
   
   # Read passphrase from secure file
   if [[ ! -f /home/deploy/.backup_passphrase ]]; then
@@ -828,7 +830,7 @@ sudo systemctl enable --now postgresql
   ```
   0 0,12 * * * /usr/local/bin/{{ProjectLabel}}_backup.sh >> /home/deploy/backups/backup.log 2>&1
   0 3 * * * find /var/log/postgresql -name "postgresql-*.log" -mtime +7 -delete
-  0 8 * * * df -h | grep -E '^/dev/' | awk '$5+0 > 80 {print "Disk usage warning: " $0}' | mail -s "Disk Space Alert" {{Email}}
+  0 8 * * * df -h | grep -E '^/dev/' | awk '$5+0 > 80 {print "Disk usage warning: " $0}' | mail -s "Disk Space Alert" {{OpsEmail}}
   ```
 - Save and exit; cron will pick up the new schedule immediately.
 
@@ -858,7 +860,7 @@ sudo systemctl enable --now postgresql
 - Install the Certbot certificate plugin:
   ```bash
   sudo apt install -y certbot python3-certbot-nginx
-  sudo certbot --nginx --email {{Email}} --agree-tos
+  sudo certbot --nginx --email {{CertbotEmail}} --agree-tos
   ```
 
   This will show a few dialogs, choose to redirect HTTP → HTTPS when prompted.
@@ -972,8 +974,8 @@ sudo systemctl enable --now postgresql
   host {{SmtpEndpoint}}
   port 587
   from {{SmtpEmail}}
-  user {{SmtpUsername}}
-  password {{SmtpPassword}}
+  user {{SesSmtpUser}}
+  password {{SesSmtpPassword}}
   
   account default: default
   EOF
