@@ -925,13 +925,47 @@ sudo systemctl enable --now postgresql
 
 ### Obtain SSL Certificates
 
-- Install the Certbot certificate plugin:
+#### A) Normal approach (after DNS points to the new server)
+
+- Install the Certbot certificate plugin and request a cert for both the bare and www domains:
   ```bash
   sudo apt install -y certbot python3-certbot-nginx
-  sudo certbot --nginx --email {{CertbotEmail}} --agree-tos
+  sudo certbot --nginx -d {{Domain}} -d {{WwwDomain}} --email {{CertbotEmail}} --agree-tos --no-eff-email
   ```
 
-  This will show a few dialogs, choose to redirect HTTP → HTTPS when prompted.
+> **Note:** We don't care about plain HTTP and this isn't a wildcard cert, which would need separate DNS verification.
+
+#### B) Migration approach (copy existing certs from the old server)
+
+> **💡Tip:** This lets HTTPS work immediately on DNS cutover without waiting for new certificate issuance.
+
+- On the **old** server, verify the cert is healthy, then archive it:
+  ```bash
+  sudo certbot renew --dry-run
+  sudo tar czf /home/deploy/letsencrypt.tar.gz /etc/letsencrypt
+  sudo chown deploy:deploy /home/deploy/letsencrypt.tar.gz
+  ```
+
+- Copy to the new server and unpack:
+  ```bash
+  scp deploy@OLD_SERVER:/home/deploy/letsencrypt.tar.gz /home/deploy/
+  sudo tar xzf /home/deploy/letsencrypt.tar.gz -C /
+  sudo chown -R root:root /etc/letsencrypt
+  ```
+
+- If NGINX fails with a missing `options-ssl-nginx.conf`, create a minimal one:
+  ```bash
+  sudo tee /etc/letsencrypt/options-ssl-nginx.conf > /dev/null << 'EOF'
+  ssl_session_cache   shared:le_nginx_SSL:10m;
+  ssl_session_timeout 1440m;
+  ssl_session_tickets off;
+
+  ssl_protocols TLSv1.2 TLSv1.3;
+  ssl_prefer_server_ciphers off;
+  EOF
+  ```
+
+#### Verify
 
 - Check NGINX syntax and confirm that the site is serving valid TLS:
   ```bash
@@ -939,8 +973,6 @@ sudo systemctl enable --now postgresql
   sudo systemctl reload nginx
   curl -I https://{{Domain}}
   ```
-
-> **Note:** We don't care about plain HTTP and this isn't a wildcard cert, which would need separate DNS verification.
 
 ### Enable Automatic Renewal
 
