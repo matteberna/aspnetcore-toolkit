@@ -252,9 +252,13 @@
   EOF
   ```
 
+> **Note:** The NGINX errors jail requires NGINX log files to exist. If fail2ban fails to start complaining about
+> missing logs, temporarily disable the NGINX jail until NGINX is installed and configured.
+
 - Apply and verify:
   ```bash
   systemctl restart fail2ban
+  fail2ban-client ping
   fail2ban-client status sshd
   ```
 
