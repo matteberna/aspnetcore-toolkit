@@ -70,7 +70,8 @@
 
 - Avoid enabling the **IPv6 address**, which the application won't support.
 
-- Select the public (.pub) key you just generated.
+- If your provider supports it, select the public (.pub) key you just generated during provisioning. Otherwise, you’ll
+  copy it manually after the first login (see [Create the deploy user](#create-the-deploy-user)).
 
 > **Note:** Automatic backups give you easy rollback points in case something goes wrong, but they also increase the
 > server's monthly cost by 20%. Since we're going to set up database backups, these aren't strictly necessary.
@@ -275,10 +276,19 @@
 
 - Record the password in your secure vault.
 
-- Copy the pre-authorized SSH Keys and set permissions:
+- Copy the SSH key to the new user. If the key was added during provisioning, copy it from root:
   ```bash
   mkdir -p /home/deploy/.ssh
   cp /root/.ssh/authorized_keys /home/deploy/.ssh/
+  chown -R deploy:deploy /home/deploy/.ssh
+  chmod 700 /home/deploy/.ssh
+  chmod 600 /home/deploy/.ssh/authorized_keys
+  ```
+
+- If your provider didn't support key upload, paste your public key manually instead:
+  ```bash
+  mkdir -p /home/deploy/.ssh
+  nano /home/deploy/.ssh/authorized_keys   # paste the .pub key contents
   chown -R deploy:deploy /home/deploy/.ssh
   chmod 700 /home/deploy/.ssh
   chmod 600 /home/deploy/.ssh/authorized_keys
