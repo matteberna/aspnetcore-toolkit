@@ -61,10 +61,8 @@
 
 ### Provision a VPS
 
-- You're going to need a machine with at least 2 dedicated vCPUs and 8 GB RAM.
-
-> **Note:** The numbers in this documentation are optimized for a machine with 8GB of RAM. For more powerful servers,
-> adjust them accordingly whenever recommended percentages are given.
+> **Note:** The numbers in this documentation (swap size, PostgreSQL memory settings, CPU quotas) are optimized for an
+> 8 vCPU / 16 GB RAM machine. For smaller servers, scale them down — look for comments with recommended percentages.
 
 - Choose the latest **Debian** stable release (**13 Trixie+**) or **Ubuntu LTS** (**24.04+**)
 
@@ -107,7 +105,7 @@
 
 - Run as root:
   ```bash
-  fallocate -l 4G /swapfile
+  fallocate -l 8G /swapfile
   chmod 600 /swapfile
   mkswap /swapfile
   swapon /swapfile
@@ -117,7 +115,7 @@
   sysctl --system
   ```  
 
-  This allocates a 4 GB swap file (~50% of the server's RAM), restricts access, and tweaks the kernel's memory
+  This allocates an 8 GB swap file (~50% of the server's RAM), restricts access, and tweaks the kernel's memory
   management
 
 ### Set Hostname & Timezone
@@ -487,9 +485,9 @@ sudo systemctl enable --now postgresql
   listen_addresses = 'localhost'
   password_encryption = scram-sha-256
   
-  shared_buffers = 1GB  # Optimize as needed
-  effective_cache_size = 6GB  # ~75% of RAM on an 8GB server
-  maintenance_work_mem = 512MB
+  shared_buffers = 4GB  # ~25% of RAM
+  effective_cache_size = 12GB  # ~75% of RAM
+  maintenance_work_mem = 1GB
   ```
 
 > **Note:** [PGTune](https://pgtune.leopard.in.ua/) is a great tool for fine-tuning your PostgreSQL configuration.
@@ -1095,7 +1093,7 @@ sudo systemctl enable --now postgresql
   Environment=ASPNETCORE_URLS=http://localhost:5000
   Environment=ASPNETCORE_ENVIRONMENT=Production
   Environment=DOTNET_PRINT_TELEMETRY_MESSAGE=false
-  CPUQuota=200%
+  CPUQuota=400%
   KillMode=mixed
   KillSignal=SIGTERM
   MemoryAccounting=yes
