@@ -619,8 +619,6 @@ sudo systemctl enable --now postgresql
   }
   ```
 
-> **Note:** The SSL directives referenced here are placeholders.
-
 > **Note:** Strict-Transport-Security is a permanent commitment to HTTPS for your entire domain and all its subdomains.
 
 - Add firewall rules for NGINX:
@@ -712,11 +710,8 @@ sudo systemctl enable --now postgresql
 > **Note:** Place `limit_req_zone` and `ssl_session_*` directives at the top of the `http` block, before any `include`
 > statements.
 
-- Validate the configuration:
-  ```bash
-  sudo nginx -t
-  sudo systemctl reload nginx
-  ```
+> **Note:** Don't run `nginx -t` yet — the SSL certificates referenced in the config don't exist until the Certbot
+> step below.
 
 ## Semi-Daily Backups
 
