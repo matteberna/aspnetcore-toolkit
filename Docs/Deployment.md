@@ -604,53 +604,80 @@ sudo systemctl enable --now postgresql
   ```
 
 - Paste this content:
+
+  > **⚠️Caution:** Do not force HTTPS or www redirects inside the ASP.NET app while NGINX is canonicalizing — this
+  > causes redirect loops.
+
+  > **Note:** Strict-Transport-Security is a permanent commitment to HTTPS for your entire domain and all its subdomains.
+
   ```nginx
+  # HTTP -> HTTPS + www
   server {
       listen 80;
-      server_name {{Domain}} www.{{Domain}};
-      return 301 https://$host$request_uri;
+      server_name {{Domain}} {{WwwDomain}};
+      return 301 https://{{WwwDomain}}$request_uri;
   }
 
+  # HTTPS bare domain -> HTTPS www
   server {
-      listen 443 ssl http2;
-      server_name {{Domain}} www.{{Domain}};
+      listen 443 ssl;
+      http2 on;
+      server_name {{Domain}};
+
+      ssl_certificate     /etc/letsencrypt/live/{{Domain}}/fullchain.pem;
+      ssl_certificate_key /etc/letsencrypt/live/{{Domain}}/privkey.pem;
+      include /etc/letsencrypt/options-ssl-nginx.conf;
+
+      return 301 https://{{WwwDomain}}$request_uri;
+  }
+
+  # HTTPS www -> actual site
+  server {
+      listen 443 ssl;
+      http2 on;
+      server_name {{WwwDomain}};
 
       root /var/www/{{ProjectLabel}}/wwwroot;
-  
-      ssl_stapling on;
-      ssl_stapling_verify on;
-      resolver 1.1.1.1 8.8.4.4 valid=300s;
-      resolver_timeout 5s;
-      ssl_certificate /etc/letsencrypt/live/{{Domain}}/fullchain.pem;
+
+      ssl_certificate     /etc/letsencrypt/live/{{Domain}}/fullchain.pem;
       ssl_certificate_key /etc/letsencrypt/live/{{Domain}}/privkey.pem;
-      ssl_trusted_certificate /etc/letsencrypt/live/{{Domain}}/chain.pem;
-  
       include /etc/letsencrypt/options-ssl-nginx.conf;
 
       add_header Strict-Transport-Security "max-age=31536000; includeSubDomains; preload" always;
       add_header X-Content-Type-Options "nosniff" always;
       add_header X-Frame-Options "DENY" always;
       add_header Referrer-Policy "strict-origin-when-cross-origin" always;
-  
+
       client_max_body_size 10M;
 
       error_page 502 503 504 /maintenance.html;
-  
+
       location = /maintenance.html {
           root /var/www/{{ProjectLabel}}/wwwroot;
           internal;
       }
 
+      location /health {
+          access_log off;
+          return 200 "healthy\n";
+          add_header Content-Type text/plain;
+      }
+
+      # Serve static files directly from wwwroot, pass everything else to Kestrel
       location / {
-          limit_req zone=one burst=20 nodelay;
+          try_files $uri @app;
+      }
+
+      location @app {
+          limit_req zone=one burst=200 nodelay;
+          limit_req_status 429;
           proxy_pass http://localhost:5000;
           proxy_http_version 1.1;
           proxy_set_header Upgrade $http_upgrade;
           proxy_set_header Connection $connection_upgrade;
           proxy_set_header Host $host;
-          proxy_cache_bypass $http_upgrade;
           proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-          proxy_set_header X-Forwarded-Proto $scheme;
+          proxy_set_header X-Forwarded-Proto https;
           proxy_buffer_size 4k;
           proxy_buffers 4 32k;
           proxy_busy_buffers_size 64k;
@@ -658,16 +685,11 @@ sudo systemctl enable --now postgresql
           proxy_send_timeout 30s;
           proxy_read_timeout 30s;
       }
-  
-      location /health {
-        access_log off;
-        return 200 "healthy\n";
-        add_header Content-Type text/plain;
-      }
   }
   ```
 
-> **Note:** Strict-Transport-Security is a permanent commitment to HTTPS for your entire domain and all its subdomains.
+> **Note:** If you later add caching headers, be careful with paths that include avatars or dynamic assets whose content
+> can change at the same URL.
 
 - Add firewall rules for NGINX:
   ```bash
@@ -736,7 +758,7 @@ sudo systemctl enable --now postgresql
       ''        close;
   }
 
-  limit_req_zone $binary_remote_addr zone=one:10m rate=10r/s;
+  limit_req_zone $binary_remote_addr zone=one:10m rate=100r/s;
   
   gzip on;
   gzip_vary on;
@@ -896,7 +918,7 @@ sudo systemctl enable --now postgresql
 
 ### Configure DNS Records
 
-- In your DNS provider’s dashboard, create `A` records for both `{{Domain}}` and `www.{{Domain}}` pointing to your
+- In your DNS provider’s dashboard, create `A` records for both `{{Domain}}` and `{{WwwDomain}}` pointing to your
   server’s public IPv4 address (optionally lower the TTL to accelerate propagation).
 
 - Wait until `dig +short {{Domain}}` returns the correct IP.
@@ -919,11 +941,6 @@ sudo systemctl enable --now postgresql
   ```
 
 > **Note:** We don't care about plain HTTP and this isn't a wildcard cert, which would need separate DNS verification.
-
-- Verify that OCSP stapling, an SSL performance optimization we've configured above, is working:
-  ```bash
-  sudo openssl s_client -connect {{Domain}}:443 -servername {{Domain}} -status < /dev/null 2>/dev/null | grep -A1 'OCSP response:'
-  ```
 
 ### Enable Automatic Renewal
 
