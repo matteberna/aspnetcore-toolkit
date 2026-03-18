@@ -89,14 +89,12 @@
   ```ssh
   Host {{ProjectLabel}}-prod
   HostName {{IpAddress}}
-  User deploy
+  User root
   ServerAliveInterval 60
   IdentitiesOnly yes
   StrictHostKeyChecking ask
   IdentityFile ~/.ssh/{{ProjectLabel}}_key
   ```
-
-- Test the connection with `ssh {{ProjectLabel}}-prod`
 
 ## Initial System Configuration
 
@@ -326,7 +324,11 @@
   sudo systemctl restart ssh
   ``` 
 
-- From a fresh session, ensure that you can SSH back in as **deploy** and that root login is disabled.
+- Update your SSH client to connect as **deploy** going forward:
+  - On **Windows**, edit your MobaXTerm session and change the username from `root` to `deploy`.
+  - On **macOS/Linux**, change `User root` to `User deploy` in your `~/.ssh/config` entry.
+
+- From a fresh session, verify that you can SSH in as **deploy** and that root login is rejected.
 
 > **Note:** Moving forward, all commands will be prefixed with `sudo`.
 
