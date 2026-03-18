@@ -1094,6 +1094,14 @@ sudo systemctl enable --now postgresql
   sudo chmod 600 /etc/msmtprc
   ```
 
+- Smoke test:
+  ```bash
+  echo "Test from {{ProjectLabel}} server" | mail -s "msmtp test" {{OpsEmail}}
+  ```
+
+> **Note:** These are **SMTP credentials**, not AWS access keys. Domain verification in SES is sufficient to send from
+> addresses at that domain (e.g. `mailer@{{Domain}}`), assuming SES sandbox restrictions don't block your recipients.
+
 ### Data Protection Configuration
 
 - Create the key storage directory:
