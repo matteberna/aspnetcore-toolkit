@@ -366,6 +366,10 @@
 
 - Adjust `RuntimeIdentifier` to `linux-arm64` for ARM instances.
 
+> **⚠️Caution:** If you publish as framework-dependent (DLL) instead of self-contained, the systemd `ExecStart` must
+> use `dotnet {{ProjectName}}.dll` rather than the bare binary. Running a DLL directly will fail with "Exec format
+> error". The instructions below assume a self-contained build.
+
 - Publish in Release mode:
   ```
   dotnet publish -c Release
