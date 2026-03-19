@@ -235,7 +235,7 @@
   ```bash
   sudo tee /etc/fail2ban/filter.d/nginx-errors.conf << 'EOF'
   [Definition]
-  failregex = ^<HOST> - - \[[^\]]+\] "(?:GET|POST) [^"]*" (?:404|429|444|500)
+  failregex = ^<HOST> - - \[[^\]]+\] "(?:GET|POST) [^"]*" (?:404|429|444)
   ignoreregex =
   datepattern = ^%%d/%%b/%%Y:%%H:%%M:%%S
   EOF
