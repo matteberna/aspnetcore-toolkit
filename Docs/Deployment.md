@@ -1208,7 +1208,7 @@ sudo systemctl enable --now postgresql
   PrivateDevices=true
   Restart=on-failure
   RestartSec=5
-  TimeoutStartSec=20s
+  TimeoutStartSec=90s  # EF migrations + ML model training on first boot can be slow
   TimeoutStopSec=20
   SuccessExitStatus=143
   SyslogIdentifier={{ProjectName}}
