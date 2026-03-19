@@ -1074,21 +1074,22 @@ sudo systemctl enable --now postgresql
 - Save SES credentials on the server:
   ```bash
   sudo mkdir -p /home/deploy/.aws
-  
+  sudo chown deploy:deploy /home/deploy/.aws
+  sudo chmod 700 /home/deploy/.aws
+
   sudo tee /home/deploy/.aws/credentials << 'EOF'
   [default]
   aws_access_key_id = {{SesId}}
   aws_secret_access_key = {{SesSecret}}
   EOF
-  
+
   sudo tee /home/deploy/.aws/config << 'EOF'
   [default]
   region = {{SesRegion}}
   EOF
-  
-  sudo chmod 600 /home/deploy/.aws/config
-  sudo chown -R deploy:deploy /home/deploy/.aws
-  sudo chmod 600 /home/deploy/.aws/credentials
+
+  sudo chmod 600 /home/deploy/.aws/credentials /home/deploy/.aws/config
+  sudo chown deploy:deploy /home/deploy/.aws/credentials /home/deploy/.aws/config
   ```
 
 - Save identical `credentials` and `config` files locally under `%USERPROFILE%\.aws\`.
