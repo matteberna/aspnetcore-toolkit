@@ -848,7 +848,7 @@ sudo systemctl enable --now postgresql
   KEY_DIR="/var/keys/${PROJECT}"
 
   TIMESTAMP=$(date -u +%Y-%m-%dT%H%M)
-  DB_PLAIN="$BACKUP_DIR/${PROJECT}_${TIMESTAMP}.sql.gz"
+  DB_PLAIN="$BACKUP_DIR/${PROJECT}_${TIMESTAMP}.dump"
   DB_ENC="$DB_PLAIN.gpg"
   AVATAR_PLAIN="$BACKUP_DIR/avatars_${TIMESTAMP}.tar.gz"
   KEYS_PLAIN="$BACKUP_DIR/dataprotectionkeys_${TIMESTAMP}.tar.gz"
@@ -867,7 +867,7 @@ sudo systemctl enable --now postgresql
   chmod 750 "$BACKUP_DIR"
 
   # Database dump (encrypted)
-  sudo -u postgres pg_dump "$PROJECT" --no-owner --no-privileges | gzip > "$DB_PLAIN"
+  sudo -u postgres pg_dump "$PROJECT" --format=custom --no-owner --no-privileges > "$DB_PLAIN"
   gpg --batch --yes \
     --pinentry-mode loopback \
     --cipher-algo AES256 \
@@ -875,10 +875,10 @@ sudo systemctl enable --now postgresql
     --output "$DB_ENC" \
     --symmetric "$DB_PLAIN"
 
-  # Verification (decrypt + gzip integrity test)
+  # Verification (decrypt + pg_restore integrity test)
   if gpg --batch --decrypt --pinentry-mode loopback \
     --passphrase "$BACKUP_GPG_PASSPHRASE" "$DB_ENC" 2>/dev/null \
-    | gunzip -t 2>/dev/null;
+    | pg_restore --list > /dev/null 2>&1;
   then
     echo "$(date -u): Database backup verified successfully" >&2
   else
@@ -908,7 +908,7 @@ sudo systemctl enable --now postgresql
 
   # Pruning (14-day retention)
   find "$BACKUP_DIR" -type f \( \
-    -name "${PROJECT}_*.sql.gz.gpg" \
+    -name "${PROJECT}_*.dump.gpg" \
     -o -name "dataprotectionkeys_*.tar.gz.gpg" \
     \) -mtime +14 -delete
 
