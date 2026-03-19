@@ -627,8 +627,11 @@ sudo systemctl enable --now postgresql
   ```bash
   sudo apt install -y nginx
   sudo systemctl enable --now nginx
+  sudo openssl dhparam -out /etc/ssl/certs/dhparam.pem 2048
   sudo nano /etc/nginx/sites-available/{{ProjectLabel}}.conf
   ```
+
+  > **Note:** Generating the DH param file takes a minute.
 
 - Paste this content:
 
@@ -722,11 +725,6 @@ sudo systemctl enable --now postgresql
   ```bash
   sudo ufw allow 'Nginx Full'
   sudo ufw reload
-  ```
-
-- Generate a 2048-bit DH param file (takes a minute):
-  ```bash
-  sudo openssl dhparam -out /etc/ssl/certs/dhparam.pem 2048
   ```
 
 - Enable the new site, disable the default, and edit the main config:
