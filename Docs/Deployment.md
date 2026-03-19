@@ -1228,6 +1228,8 @@ sudo systemctl enable --now postgresql
   sudo chmod 644 /etc/systemd/system/{{ProjectLabel}}.service
   ```
 
+  > **Note:** ProtectHome read-only is safe because the app only reads from /home/deploy/.aws; backups run via cron outside this unit
+  
   > **Note:** `{{ProjectName}}` is the name of the self-contained binary in the `/www` folder, no extension.
 
 - Verify the status:
