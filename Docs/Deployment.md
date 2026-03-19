@@ -854,12 +854,11 @@ sudo systemctl enable --now postgresql
 
   trap 'rm -f "$DB_PLAIN" "$KEYS_PLAIN"; echo "Backup failed at $(date -u)" | mail -s "${PROJECT} Backup Failed" {{OpsEmail}}' ERR
 
-  # Read passphrase from secure file
+  # Verify passphrase file exists
   if [[ ! -f "$PASSPHRASE_FILE" ]]; then
     echo "$(date -u): ERROR - Backup passphrase file not found!" >&2
     exit 1
   fi
-  BACKUP_GPG_PASSPHRASE=$(cat "$PASSPHRASE_FILE")
 
   mkdir -p "$BACKUP_DIR"
   chmod 750 "$BACKUP_DIR"
@@ -869,7 +868,7 @@ sudo systemctl enable --now postgresql
   gpg --batch --yes \
     --pinentry-mode loopback \
     --cipher-algo AES256 \
-    --passphrase "$BACKUP_GPG_PASSPHRASE" \
+    --passphrase-file "$PASSPHRASE_FILE" \
     --output "$DB_ENC" \
     --symmetric "$DB_PLAIN"
 
@@ -896,13 +895,10 @@ sudo systemctl enable --now postgresql
   gpg --batch --yes \
     --pinentry-mode loopback \
     --cipher-algo AES256 \
-    --passphrase "$BACKUP_GPG_PASSPHRASE" \
+    --passphrase-file "$PASSPHRASE_FILE" \
     --output "$KEYS_ENC" \
     --symmetric "$KEYS_PLAIN"
   rm -f "$KEYS_PLAIN"
-
-  # Clear passphrase from memory
-  unset BACKUP_GPG_PASSPHRASE
 
   # Pruning (14-day retention)
   find "$BACKUP_DIR" -type f \( \
