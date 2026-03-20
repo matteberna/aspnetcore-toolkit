@@ -1252,6 +1252,8 @@ sudo systemctl enable --now postgresql
   curl -s -o /dev/null -w "%{http_code}" http://localhost:5000
   ```
 
+- Confirm background jobs are running by visiting `https://{{WwwDomain}}/hangfire` and checking that the recurring jobs list is populated and the first executions are completing successfully.
+
 ## Log Rotation
 
 This keeps log files from growing forever, rotating them daily and keeping 7 days of history.
