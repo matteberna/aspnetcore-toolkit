@@ -372,8 +372,6 @@
   sudo chown -R deploy:web /var/www/{{ProjectLabel}}
   sudo find /var/www/{{ProjectLabel}} -type d -exec chmod 2775 {} \;
   sudo find /var/www/{{ProjectLabel}} -type f -exec chmod 664 {} \;
-  sudo mkdir -p /var/www/{{ProjectLabel}}/logs
-  sudo chown deploy:web /var/www/{{ProjectLabel}}/logs
   ```
 
   This ensures new files are also inheriting the web group.
@@ -1234,6 +1232,12 @@ sudo systemctl enable --now postgresql
   ```bash
   sudo systemctl daemon-reload
   sudo systemd-analyze verify /etc/systemd/system/{{ProjectLabel}}.service
+  ```
+
+- Ensure the logs directory exists with correct ownership so Serilog can write on first start:
+  ```bash
+  sudo mkdir -p /var/www/{{ProjectLabel}}/logs
+  sudo chown deploy:web /var/www/{{ProjectLabel}}/logs
   ```
 
 - Start the application and keep an eye on live logs:
