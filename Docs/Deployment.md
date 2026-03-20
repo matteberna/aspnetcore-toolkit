@@ -408,10 +408,13 @@
 
 - On **Linux/macOS**, run:
   ```bash
-  rsync -avz --delete \
+  rsync -avz \
   ./bin/Release/net*/linux-*/publish/ \
   deploy@{{ServerIp}}:/var/www/{{ProjectLabel}}/
   ```
+  
+  > **Note:** This is for the **initial upload** only - the destination is empty, so a straight copy is all you need.
+  For subsequent updates, use the utility included in the repository. It calls `rsync` under the hood but handles service stop/start, runtime directory exclusions, and cross-platform differences (including WSL2 on Windows) so you don't accidentally overwrite files the application generated at runtime.
 
 ## PostgreSQL Installation & Configuration
 
