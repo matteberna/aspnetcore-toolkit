@@ -1249,6 +1249,11 @@ sudo systemctl enable --now postgresql
   journalctl -u {{ProjectLabel}} --no-pager
   ```
 
+- Smoke-test that Kestrel is actually serving requests (expect `200` or `302`):
+  ```bash
+  curl -s -o /dev/null -w "%{http_code}" http://localhost:5000
+  ```
+
 ## Log Rotation
 
 This keeps log files from growing forever, rotating them daily and keeping 7 days of history.
