@@ -190,6 +190,8 @@
   Unattended-Upgrade::Automatic-Reboot "true";
   Unattended-Upgrade::Automatic-Reboot-Time "04:30";
   Unattended-Upgrade::Remove-Unused-Dependencies "true";
+  Unattended-Upgrade::Mail "{{OpsEmail}}";
+  Unattended-Upgrade::MailReport "on-change";
   ```
 
 - Verify the periodic settings with:
