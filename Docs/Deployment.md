@@ -928,7 +928,7 @@ sudo systemctl enable --now postgresql
 - Add this line to run the backup at **00:00** and **12:00** UTC every day, with basic monitoring:
   ```
   0 0,12 * * * /usr/local/bin/{{ProjectLabel}}_backup.sh >> /home/deploy/backups/backup.log 2>&1
-  0 3 * * * find /var/log/postgresql -name "postgresql-*.log" -mtime +7 -delete
+  0 3 * * * sudo find /var/log/postgresql -name "postgresql-*.log" -mtime +7 -delete
   0 8 * * * df -h | grep -E '^/dev/' | awk '$5+0 > 80 {print "Disk usage warning: " $0}' | mail -s "Disk Space Alert" {{OpsEmail}}
   ```
 - Save and exit; cron will pick up the new schedule immediately.
