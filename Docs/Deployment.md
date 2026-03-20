@@ -1186,7 +1186,8 @@ sudo systemctl enable --now postgresql
   sudo tee /etc/systemd/system/{{ProjectLabel}}.service << 'EOF'
   [Unit]
   Description={{ProjectName}} ASP.NET Core application
-  After=network.target
+  After=network.target postgresql.service
+  Requires=postgresql.service
   StartLimitIntervalSec=60
   StartLimitBurst=5
 
