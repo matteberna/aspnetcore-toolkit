@@ -672,12 +672,7 @@ sudo systemctl enable --now postgresql
           add_header Content-Type text/plain;
       }
 
-      # Serve static files directly from wwwroot, pass everything else to Kestrel
       location / {
-          try_files $uri @app;
-      }
-
-      location @app {
           limit_req zone=one burst=200 nodelay;
           limit_req_status 429;
           proxy_pass http://localhost:5000;
