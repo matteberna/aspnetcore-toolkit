@@ -485,18 +485,21 @@ sudo systemctl enable --now postgresql
 
 - Run this SQL command:
   ```bash
-  sudo -u postgres psql -v ON_ERROR_STOP=1 << EOF
-  CREATE ROLE {{ProjectLabel}} 
-    LOGIN 
+   sudo -u postgres psql -v ON_ERROR_STOP=1 << EOF
+  CREATE ROLE {{ProjectLabel}}
+    LOGIN
     PASSWORD '{{DbPassword}}';
-  CREATE DATABASE {{ProjectLabel}} 
-    OWNER {{ProjectLabel}} 
+  CREATE DATABASE {{ProjectLabel}}
+    OWNER {{ProjectLabel}}
     ENCODING 'UTF8';
   GRANT ALL PRIVILEGES ON DATABASE {{ProjectLabel}} TO {{ProjectLabel}};
   EOF
-  
-  history -c && history -w
+
+  history -d $(history 1 | awk '{print $1}')
   ```
+
+> **Tip:** On Debian/Ubuntu, `HISTCONTROL=ignorespace` is set by default — prefixing any command with a
+> space will prevent it from being recorded in shell history in the first place.
 
 ### PostgreSQL Backup Restoration
 
