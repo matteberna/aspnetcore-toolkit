@@ -231,30 +231,6 @@
   EOF
   ```
 
-- Add another jail to block clients hammering the site with 4xx/5xx errors:
-  ```bash
-  sudo tee /etc/fail2ban/filter.d/nginx-errors.conf << 'EOF'
-  [Definition]
-  failregex = ^<HOST> - - \[[^\]]+\] "(?:GET|POST) [^"]*" (?:404|429|444)
-  ignoreregex =
-  datepattern = ^%%d/%%b/%%Y:%%H:%%M:%%S
-  EOF
-  
-  sudo tee /etc/fail2ban/jail.d/nginx-errors.conf << 'EOF'
-  [nginx-errors]
-  enabled  = true
-  filter   = nginx-errors
-  port     = http,https
-  logpath  = /var/log/nginx/access.log
-  maxretry = 30
-  findtime = 60
-  bantime  = 600
-  EOF
-  ```
-
-> **Note:** The NGINX errors jail requires NGINX log files to exist. If fail2ban fails to start complaining about
-> missing logs, temporarily disable the NGINX jail until NGINX is installed and configured.
-
 - Apply and verify:
   ```bash
   systemctl restart fail2ban
@@ -810,6 +786,35 @@ sudo systemctl enable --now postgresql
 
 > **Note:** Don't run `nginx -t` yet — the SSL certificates referenced in the config don't exist until the Certbot
 > step below.
+
+### Enable Fail2Ban NGINX Jail
+
+- Add a Fail2Ban jail to block clients hammering the site with 4xx/5xx errors:
+  ```bash
+  sudo tee /etc/fail2ban/filter.d/nginx-errors.conf << 'EOF'
+  [Definition]
+  failregex = ^<HOST> - - \[[^\]]+\] "(?:GET|POST) [^"]*" (?:404|429|444)
+  ignoreregex =
+  datepattern = ^%%d/%%b/%%Y:%%H:%%M:%%S
+  EOF
+
+  sudo tee /etc/fail2ban/jail.d/nginx-errors.conf << 'EOF'
+  [nginx-errors]
+  enabled  = true
+  filter   = nginx-errors
+  port     = http,https
+  logpath  = /var/log/nginx/access.log
+  maxretry = 30
+  findtime = 60
+  bantime  = 600
+  EOF
+  ```
+
+- Restart Fail2Ban to pick up the new jail:
+  ```bash
+  sudo systemctl restart fail2ban
+  sudo fail2ban-client status nginx-errors
+  ```
 
 ## Semi-Daily Backups
 
