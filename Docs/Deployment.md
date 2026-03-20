@@ -296,7 +296,7 @@
 
 - In a new session, verify you can SSH in as **deploy**:
   ```bash
-  ssh deploy@{{ServerIp}}
+  ssh -i ~/.ssh/{{ProjectLabel}}_key deploy@{{ServerIp}}
   ```
 
 ### Lock Down SSHD
