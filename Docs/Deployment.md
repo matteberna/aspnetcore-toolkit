@@ -738,11 +738,6 @@ sudo systemctl enable --now postgresql
   send_timeout 10s;
   keepalive_timeout 15s;
   ssl_dhparam /etc/ssl/certs/dhparam.pem;
-  ssl_session_cache shared:SSL:10m;
-  ssl_session_timeout 10m;
-  ssl_protocols TLSv1.2 TLSv1.3;
-  ssl_ciphers HIGH:!aNULL:!MD5;
-  ssl_prefer_server_ciphers on;
   
   client_body_buffer_size 128k;
   client_header_buffer_size 1k;
@@ -776,8 +771,8 @@ sudo systemctl enable --now postgresql
       text/xml;
   ```
 
-> **Note:** Place `limit_req_zone` and `ssl_session_*` directives at the top of the `http` block, before any `include`
-> statements.
+> **Note:** Place `limit_req_zone` and `ssl_dhparam` directives at the top of the `http` block, before any `include`
+> statements. SSL session/protocol/cipher settings are managed by Certbot's `options-ssl-nginx.conf` include.
 
 > **Note:** Don't run `nginx -t` yet — the SSL certificates referenced in the config don't exist until the Certbot
 > step below.
