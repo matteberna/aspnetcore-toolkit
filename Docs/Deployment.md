@@ -330,9 +330,13 @@
 
 ### Prepare the Self-Contained Build
 
-- Open `{{ProjectName}}.csproj` and add under `<PropertyGroup>`:
+- Open `{{ProjectName}}.csproj` and add these blocks:
 
   ```xml
+  <PropertyGroup>
+      <InvariantGlobalization>true</InvariantGlobalization>
+  </PropertyGroup>
+  
   <PropertyGroup Condition="'$(Configuration)' == 'Release'">
       <Optimize>true</Optimize>
       <TieredCompilation>true</TieredCompilation>
@@ -347,6 +351,8 @@
   ```
 
 - Adjust `RuntimeIdentifier` to `linux-arm64` for ARM instances.
+
+  > **Note:** Setting `InvariantGlobalization` to `true` removes the dependency on ICU libraries, simplifying the server setup. If your application needs culture-aware formatting (e.g., localized date/currency display), install `libicu` on the server instead.
 
   > **⚠️Caution:** The configuration above produces a self-contained build (implicit when `RuntimeIdentifier` is set). If you change to framework-dependent publishing, the systemd `ExecStart` must use `dotnet {{ProjectName}}.dll` rather than the bare binary.
 
