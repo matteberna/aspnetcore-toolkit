@@ -1163,10 +1163,14 @@ sudo systemctl enable --now postgresql
 - In `Program.cs`, add the Forwarded Headers middleware after `WebApplication.CreateBuilder(args)`:
 
     ```csharp
-    builder.Services.Configure<ForwardedHeadersOptions>(o =>
+    builder.Services.Configure<ForwardedHeadersOptions>(options =>
     {
-        o.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
-        o.KnownProxies.Add(IPAddress.Parse("127.0.0.1")); // NGINX on same box
+        options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+        options.ForwardLimit = 1;
+        options.KnownNetworks.Clear();
+        options.KnownProxies.Clear();
+        options.KnownProxies.Add(IPAddress.Loopback);       // 127.0.0.1
+        options.KnownProxies.Add(IPAddress.IPv6Loopback);   // ::1
     });
     ```
 
