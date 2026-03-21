@@ -1152,8 +1152,12 @@ sudo systemctl enable --now postgresql
 - In `Program.cs`, add:
   ```csharp
   builder.Services.AddDataProtection()
-      .PersistKeysToFileSystem(new DirectoryInfo("/var/keys/{{ProjectLabel}}"));
+      .PersistKeysToFileSystem(new DirectoryInfo("/var/keys/{{ProjectLabel}}"))
+      .SetDefaultKeyLifetime(TimeSpan.FromDays(365 * 3));
   ```
+
+> **Note:** The default key lifetime is 90 days. The 3-year setting above reduces key rotation frequency, preventing
+> users from being silently logged out when old keys expire and the app can no longer decrypt their auth cookies.
 
 > **Note:** We’re using a single-server key store without certificate protection; for multi-server or high-security
 > setups, add `.ProtectKeysWithCertificate(...)`
