@@ -333,22 +333,22 @@
 - Open `{{ProjectName}}.csproj` and add under `<PropertyGroup>`:
 
   ```xml
-  <PropertyGroup>
-      <RuntimeIdentifier>linux-x64</RuntimeIdentifier>
-      <SelfContained>true</SelfContained>
-      <PublishSingleFile>true</PublishSingleFile>
-      <EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
-      <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
+  <PropertyGroup Condition="'$(Configuration)' == 'Release'">
+      <Optimize>true</Optimize>
+      <TieredCompilation>true</TieredCompilation>
+      <TieredPGO>true</TieredPGO>
       <PublishReadyToRun>true</PublishReadyToRun>
-      <DebugType>none</DebugType>
+      <ReadyToRunComposite>true</ReadyToRunComposite>
+      <RuntimeIdentifier>linux-x64</RuntimeIdentifier>
+      <DebugSymbols>true</DebugSymbols>
+      <DebugType>portable</DebugType>
+      <PublishTrimmed>false</PublishTrimmed>
   </PropertyGroup>
   ```
 
 - Adjust `RuntimeIdentifier` to `linux-arm64` for ARM instances.
 
-> **⚠️Caution:** If you publish as framework-dependent (DLL) instead of self-contained, the systemd `ExecStart` must
-> use `dotnet {{ProjectName}}.dll` rather than the bare binary. Running a DLL directly will fail with "Exec format
-> error". The instructions below assume a self-contained build.
+  > **⚠️Caution:** The configuration above produces a self-contained build (implicit when `RuntimeIdentifier` is set). If you change to framework-dependent publishing, the systemd `ExecStart` must use `dotnet {{ProjectName}}.dll` rather than the bare binary.
 
 - Publish in Release mode:
   ```
