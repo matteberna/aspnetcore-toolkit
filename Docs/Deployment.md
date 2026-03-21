@@ -624,7 +624,16 @@ sudo systemctl enable --now postgresql
 - Paste this content:
 
   > **⚠️Caution:** Do not force HTTPS or www redirects inside the ASP.NET app while NGINX is canonicalizing — this
-  > causes redirect loops.
+  > causes redirect loops. If your app has its own HTTPS or www redirect middleware, make sure it's conditionally
+  > disabled in production. NGINX is already handling the `301` redirects — having both active causes redirect loops.
+  > For example:
+  > ```csharp
+  > if (Build.Development)
+  > {
+  >     rewrite.AddRedirectToWwwPermanent()
+  >         .AddRedirectToHttps();
+  > }
+  > ```
 
   > **Note:** Strict-Transport-Security is a permanent commitment to HTTPS for your entire domain and all its subdomains.
 
