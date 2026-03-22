@@ -890,7 +890,7 @@ sudo systemctl enable --now postgresql
 
   # Verification (decrypt + pg_restore integrity test)
   if gpg --batch --decrypt --pinentry-mode loopback \
-    --passphrase "$BACKUP_GPG_PASSPHRASE" "$DB_ENC" 2>/dev/null \
+    --passphrase-file "$PASSPHRASE_FILE" "$DB_ENC" 2>/dev/null \
     | pg_restore --list > /dev/null 2>&1;
   then
     echo "$(date -u): Database backup verified successfully" >&2
