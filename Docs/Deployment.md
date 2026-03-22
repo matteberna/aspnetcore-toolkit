@@ -950,13 +950,23 @@ sudo systemctl enable --now postgresql
   ```bash
   crontab -e
   ```
-- Add this line to run the backup at **00:00** and **12:00** UTC every day, with basic monitoring:
+- Add these lines to run the backup at **00:00** and **12:00** UTC every day, with basic monitoring.
+  The backup script calls `sudo -u postgres pg_dump`, which requires the sudoers rule from the
+  [Initial Server Setup](#create-the-deploy-user) section (`deploy ALL=(postgres) NOPASSWD: /usr/bin/pg_dump`).
   ```
   0 0,12 * * * /usr/local/bin/{{ProjectLabel}}_backup.sh >> /home/deploy/backups/backup.log 2>&1
-  0 3 * * * sudo find /var/log/postgresql -name "postgresql-*.log" -mtime +7 -delete
   0 8 * * * df -h | grep -E '^/dev/' | awk '$5+0 > 80 {print "Disk usage warning: " $0}' | mail -s "Disk Space Alert" {{OpsEmail}}
   ```
 - Save and exit; cron will pick up the new schedule immediately.
+
+- Add the PostgreSQL log cleanup to **root's** crontab (these are root-owned files, and `sudo` in a
+  cron job can silently fail without a TTY):
+  ```bash
+  sudo crontab -e
+  ```
+  ```
+  0 3 * * * find /var/log/postgresql -name "postgresql-*.log" -mtime +7 -delete
+  ```
 
 ### Verify and monitor
 
