@@ -500,12 +500,11 @@ sudo systemctl enable --now postgresql
     ENCODING 'UTF8';
   GRANT ALL PRIVILEGES ON DATABASE {{ProjectLabel}} TO {{ProjectLabel}};
   EOF
-
-  history -d $(history 1 | awk '{print $1}')
   ```
 
-> **Tip:** On Debian/Ubuntu, `HISTCONTROL=ignorespace` is set by default — prefixing any command with a
-> space will prevent it from being recorded in shell history in the first place.
+> **Note:** The command above is prefixed with a leading space so that `HISTCONTROL=ignorespace`
+> (the default on Debian/Ubuntu) prevents it from being recorded in shell history, keeping the
+> database password out of `~/.bash_history`.
 
 ### PostgreSQL Backup Restoration
 
