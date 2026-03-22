@@ -716,6 +716,8 @@ sudo systemctl enable --now postgresql
       }
   }
   ```
+  
+> **Note:** `zone=one` is defined in `nginx.conf` — see "Harden nginx.conf" step below.
 
 > **Note:** If you later add caching headers, be careful with paths that include avatars or dynamic assets whose content
 > can change at the same URL.
