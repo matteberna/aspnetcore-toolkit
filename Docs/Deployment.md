@@ -1219,7 +1219,6 @@ sudo systemctl enable --now postgresql
   Environment=ASPNETCORE_URLS=http://localhost:5000
   Environment=ASPNETCORE_ENVIRONMENT=Production
   Environment=DOTNET_PRINT_TELEMETRY_MESSAGE=false
-  CPUQuota=400%
   KillMode=mixed
   KillSignal=SIGTERM
   MemoryAccounting=yes
