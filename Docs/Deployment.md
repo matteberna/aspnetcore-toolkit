@@ -602,10 +602,17 @@ sudo systemctl enable --now postgresql
   ```json
   {
     "ConnectionStrings": {
-      "DefaultConnection": "Host=localhost;Database={{ProjectLabel}};UserId={{ProjectLabel}};Password={{DbPassword}};Pooling=true;Minimum Pool Size=3;Maximum Pool Size=20;"
+      "DefaultConnection": "Host=localhost;Database={{ProjectLabel}};UserId={{ProjectLabel}};Password={{DbPassword}};Pooling=true;Maximum Pool Size=95;Connection Timeout=5;Connection Idle Lifetime=300;",
+      "HangfireConnection": "Host=localhost;Database={{ProjectLabel}};UserId={{ProjectLabel}};Password={{DbPassword}};Pooling=true;Maximum Pool Size=5;"
     }
   }
   ```
+
+  > **Note:** Hangfire should use a dedicated connection string with its own pool. If it shares
+  > `DefaultConnection`, its polling and job execution will compete with web requests for the same
+  > pool, which can cause pool exhaustion under load. Wire `HangfireConnection` in `Program.cs`
+  > instead of `DefaultConnection`. The combined total (100) stays well within PostgreSQL's
+  > `max_connections=200`.
 
 ## NGINX Installation & Configuration
 
