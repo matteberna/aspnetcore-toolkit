@@ -735,6 +735,10 @@ sudo systemctl enable --now postgresql
   sudo nano /etc/nginx/nginx.conf
   ```
 
+  > **⚠️Caution:** Do not reload NGINX after symlinking — the site config references SSL certificate
+  > paths that don't exist until the Certbot step is complete. NGINX will continue serving the
+  > default site in the meantime.
+
 - At the very top, before the `http` block, add:
 
   ```nginx
