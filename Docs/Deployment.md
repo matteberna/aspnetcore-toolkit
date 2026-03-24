@@ -1267,6 +1267,8 @@ sudo systemctl enable --now postgresql
   KillMode=mixed
   KillSignal=SIGTERM
   MemoryAccounting=yes
+  MemoryHigh=12G
+  MemoryMax=14G
   ProtectSystem=full
   ProtectHome=read-only
   NoNewPrivileges=true
