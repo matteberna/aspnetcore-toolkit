@@ -225,6 +225,7 @@
   bantime  = 1h
   findtime = 10m
   maxretry = 5
+  ignoreip = 127.0.0.1/8 ::1
 
   [sshd]
   enabled = true
@@ -809,31 +810,50 @@ sudo systemctl enable --now postgresql
 
 ### Enable Fail2Ban NGINX Jail
 
-- Add a Fail2Ban jail to block clients hammering the site with 4xx/5xx errors:
+- Add Fail2Ban filters and jails for NGINX. These are split into two jails: one for unambiguously
+  abusive status codes (429/444), and a more lenient one for 404s which can be triggered by
+  legitimate clients (stale bookmarks, search engine re-indexing, changed asset paths):
   ```bash
-  sudo tee /etc/fail2ban/filter.d/nginx-errors.conf << 'EOF'
+  sudo tee /etc/fail2ban/filter.d/nginx-abuse.conf << 'EOF'
   [Definition]
-  failregex = ^<HOST> - - \[[^\]]+\] "(?:GET|POST|HEAD|PUT|DELETE|PATCH|OPTIONS) [^"]*" (?:404|429|444)
+  failregex = ^<HOST> - - \[[^\]]+\] "(?:GET|POST|HEAD|PUT|DELETE|PATCH|OPTIONS) [^"]*" (?:429|444)
+  ignoreregex =
+  datepattern = ^%%d/%%b/%%Y:%%H:%%M:%%S
+  EOF
+
+  sudo tee /etc/fail2ban/filter.d/nginx-notfound.conf << 'EOF'
+  [Definition]
+  failregex = ^<HOST> - - \[[^\]]+\] "(?:GET|POST|HEAD|PUT|DELETE|PATCH|OPTIONS) [^"]*" 404
   ignoreregex =
   datepattern = ^%%d/%%b/%%Y:%%H:%%M:%%S
   EOF
 
   sudo tee /etc/fail2ban/jail.d/nginx-errors.conf << 'EOF'
-  [nginx-errors]
+  [nginx-abuse]
   enabled  = true
-  filter   = nginx-errors
+  filter   = nginx-abuse
   port     = http,https
   logpath  = /var/log/nginx/access.log
   maxretry = 30
   findtime = 60
   bantime  = 600
+
+  [nginx-notfound]
+  enabled  = true
+  filter   = nginx-notfound
+  port     = http,https
+  logpath  = /var/log/nginx/access.log
+  maxretry = 60
+  findtime = 120
+  bantime  = 300
   EOF
   ```
 
-- Restart Fail2Ban to pick up the new jail:
+- Restart Fail2Ban to pick up the new jails:
   ```bash
   sudo systemctl restart fail2ban
-  sudo fail2ban-client status nginx-errors
+  sudo fail2ban-client status nginx-abuse
+  sudo fail2ban-client status nginx-notfound
   ```
 
 ## Semi-Daily Backups
