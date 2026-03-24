@@ -445,7 +445,7 @@ sudo systemctl enable --now postgresql
   # Then require SCRAM for everyone else
   local     all     all                         scram-sha-256
   host      all     all         127.0.0.1/32    scram-sha-256
-  host      all     all         ::1/128         scram-sha-256
+  host      all     all         ::1/128         scram-sha-256   # won't match with IPv6 disabled, kept for completeness
   ```
 
 - Edit the main config:
