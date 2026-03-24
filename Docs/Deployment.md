@@ -731,6 +731,8 @@ sudo systemctl enable --now postgresql
   }
   ```
   
+> **Note:** This assumes the project ships a `maintenance.html` in `wwwroot`; if absent, NGINX will serve its default error page.
+ 
 > **Note:** `zone=one` is defined in `nginx.conf` — see "Harden nginx.conf" step below.
 
 > **Note:** If you later add caching headers, be careful with paths that include avatars or dynamic assets whose content
