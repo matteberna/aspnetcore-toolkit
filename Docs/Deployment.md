@@ -132,10 +132,11 @@
   ```
   Update the `127.0.1.1` line to match `{{ProjectLabel}}-prod`
 
-- Enable persistent journald logs
+- Enable persistent journald logs with a size cap (journald handles its own rotation once the limit is hit):
   ```bash
   mkdir -p /var/log/journal
   sed -i 's/#Storage=auto/Storage=persistent/' /etc/systemd/journald.conf
+  sed -i 's/#SystemMaxUse=/SystemMaxUse=500M/' /etc/systemd/journald.conf
   systemctl restart systemd-journald
   ```
 
