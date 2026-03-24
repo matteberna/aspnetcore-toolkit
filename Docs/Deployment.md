@@ -857,6 +857,85 @@ sudo systemctl enable --now postgresql
   sudo fail2ban-client status nginx-notfound
   ```
 
+## Amazon SES & Server Mail
+
+### Amazon SES Configuration
+
+- AWS frequently updates the SES domain-validation process. For the latest instructions on setting up your TXT (for
+  verification), CNAME (for DKIM), and SPF records, see the official AWS docs.
+
+- In your .NET application, specify the region when instantiating the SES client:
+  ```csharp
+  using var client =
+      new AmazonSimpleEmailServiceClient(RegionEndpoint.GetBySystemName("{{SesRegion}}"));
+  ```
+
+- Save SES credentials on the server:
+  ```bash
+  sudo mkdir -p /home/deploy/.aws
+  sudo chown deploy:deploy /home/deploy/.aws
+  sudo chmod 700 /home/deploy/.aws
+
+  sudo tee /home/deploy/.aws/credentials << 'EOF'
+  [default]
+  aws_access_key_id = {{SesId}}
+  aws_secret_access_key = {{SesSecret}}
+  EOF
+
+  sudo tee /home/deploy/.aws/config << 'EOF'
+  [default]
+  region = {{SesRegion}}
+  EOF
+
+  sudo chmod 600 /home/deploy/.aws/credentials /home/deploy/.aws/config
+  sudo chown deploy:deploy /home/deploy/.aws/credentials /home/deploy/.aws/config
+  ```
+
+- Save identical `credentials` and `config` files locally under `%USERPROFILE%\.aws\`.
+
+> 💡**Hint:** For improved security, consider storing your SES keys in AWS Secrets Manager.
+
+### msmtp Configuration
+
+- Install **msmtp**, a lightweight mail relay program:
+  ```bash
+  sudo apt update
+  sudo apt install -y msmtp-mta mailutils
+  ```
+
+- Configure **msmtp** with the Amazon SES credentials:
+  ```bash
+  sudo tee /etc/msmtprc << 'EOF'
+  # Global defaults
+  defaults
+  auth           on
+  tls            on
+  tls_trust_file /etc/ssl/certs/ca-certificates.crt
+  logfile        /var/log/msmtp.log
+
+  # System mail account (used by root + cron for backup alerts, etc.)
+  account default
+  host {{SmtpEndpoint}}
+  port 587
+  from {{SmtpEmail}}
+  user {{SesSmtpUser}}
+  password {{SesSmtpPassword}}
+
+  account default: default
+  EOF
+
+  sudo chown root:root /etc/msmtprc
+  sudo chmod 600 /etc/msmtprc
+  ```
+
+- Smoke test:
+  ```bash
+  echo "Test from {{ProjectLabel}} server" | mail -s "msmtp test" {{OpsEmail}}
+  ```
+
+> **Note:** These are **SMTP credentials**, not AWS access keys. Domain verification in SES is sufficient to send from
+> addresses at that domain (e.g. `mailer@{{Domain}}`), assuming SES sandbox restrictions don't block your recipients.
+
 ## Semi-Daily Backups
 
 ### Define the PostgreSQL backup script
@@ -1112,83 +1191,6 @@ sudo systemctl enable --now postgresql
   ```
 
   You should see "System clock synchronized: yes".
-
-### Amazon SES Configuration
-
-- AWS frequently updates the SES domain-validation process. For the latest instructions on setting up your TXT (for
-  verification), CNAME (for DKIM), and SPF records, see the official AWS docs.
-
-- In your .NET application, specify the region when instantiating the SES client:
-  ```csharp
-  using var client =
-      new AmazonSimpleEmailServiceClient(RegionEndpoint.GetBySystemName("{{SesRegion}}"));
-  ```
-
-- Save SES credentials on the server:
-  ```bash
-  sudo mkdir -p /home/deploy/.aws
-  sudo chown deploy:deploy /home/deploy/.aws
-  sudo chmod 700 /home/deploy/.aws
-
-  sudo tee /home/deploy/.aws/credentials << 'EOF'
-  [default]
-  aws_access_key_id = {{SesId}}
-  aws_secret_access_key = {{SesSecret}}
-  EOF
-
-  sudo tee /home/deploy/.aws/config << 'EOF'
-  [default]
-  region = {{SesRegion}}
-  EOF
-
-  sudo chmod 600 /home/deploy/.aws/credentials /home/deploy/.aws/config
-  sudo chown deploy:deploy /home/deploy/.aws/credentials /home/deploy/.aws/config
-  ```
-
-- Save identical `credentials` and `config` files locally under `%USERPROFILE%\.aws\`.
-
-> 💡**Hint:** For improved security, consider storing your SES keys in AWS Secrets Manager.
-
-### msmtp Configuration
-
-- Install **msmtp**, a lightweight mail relay program:
-  ```bash
-  sudo apt update
-  sudo apt install -y msmtp-mta mailutils
-  ```
-
-- Configure **msmtp** with the Amazon SES credentials:
-  ```bash
-  sudo tee /etc/msmtprc << 'EOF'
-  # Global defaults
-  defaults
-  auth           on
-  tls            on
-  tls_trust_file /etc/ssl/certs/ca-certificates.crt
-  logfile        /var/log/msmtp.log
-  
-  # System mail account (used by root + cron for backup alerts, etc.)
-  account default
-  host {{SmtpEndpoint}}
-  port 587
-  from {{SmtpEmail}}
-  user {{SesSmtpUser}}
-  password {{SesSmtpPassword}}
-  
-  account default: default
-  EOF
-  
-  sudo chown root:root /etc/msmtprc
-  sudo chmod 600 /etc/msmtprc
-  ```
-
-- Smoke test:
-  ```bash
-  echo "Test from {{ProjectLabel}} server" | mail -s "msmtp test" {{OpsEmail}}
-  ```
-
-> **Note:** These are **SMTP credentials**, not AWS access keys. Domain verification in SES is sufficient to send from
-> addresses at that domain (e.g. `mailer@{{Domain}}`), assuming SES sandbox restrictions don't block your recipients.
 
 ### Data Protection Configuration
 
