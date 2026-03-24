@@ -813,7 +813,7 @@ sudo systemctl enable --now postgresql
       application/javascript
       application/json
       application/xml
-      application/xml+rss
+      application/rss+xml
       text/javascript
       text/xml;
   ```
