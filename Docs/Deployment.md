@@ -1266,8 +1266,7 @@ sudo systemctl enable --now postgresql
   [Unit]
   Description={{ProjectName}} ASP.NET Core application
   After=network.target postgresql.service
-  Requires=postgresql.service
-  StartLimitIntervalSec=60
+  StartLimitIntervalSec=300
   StartLimitBurst=5
 
   [Service]
