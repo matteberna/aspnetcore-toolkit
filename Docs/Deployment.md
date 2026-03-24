@@ -646,6 +646,19 @@ sudo systemctl enable --now postgresql
   > **Note:** Strict-Transport-Security is a permanent commitment to HTTPS for your entire domain and all its subdomains.
 
   ```nginx
+  # Drop requests that don't match our domain (IP scans, random hostnames)
+  server {
+      listen 80 default_server;
+      listen 443 ssl default_server;
+      http2 on;
+      server_name _;
+
+      ssl_certificate     /etc/letsencrypt/live/{{Domain}}/fullchain.pem;
+      ssl_certificate_key /etc/letsencrypt/live/{{Domain}}/privkey.pem;
+
+      return 444;
+  }
+
   # HTTP -> HTTPS + www
   server {
       listen 80;
