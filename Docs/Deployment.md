@@ -484,9 +484,9 @@ sudo systemctl enable --now postgresql
 
 > **Note:** [PGTune](https://pgtune.leopard.in.ua/) is a great tool for fine-tuning your PostgreSQL configuration.
 
-- Reload PostgreSQL to pick up the edits:
+- Restart PostgreSQL to pick up the edits (`shared_buffers`, `max_connections`, and `logging_collector` require a full restart, not just a reload):
   ```bash
-  sudo systemctl reload postgresql
+  sudo systemctl restart postgresql
   ```
 
 ### Create Database Role & Schema
