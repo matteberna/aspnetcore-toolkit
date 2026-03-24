@@ -1108,10 +1108,11 @@ sudo systemctl enable --now postgresql
 
 #### A) Normal approach (after DNS points to the new server)
 
-- Install the Certbot certificate plugin and request a cert for both the bare and www domains:
+- Install the Certbot certificate plugin and obtain certs without modifying the NGINX config (which
+  already has the correct SSL directives):
   ```bash
   sudo apt install -y certbot python3-certbot-nginx
-  sudo certbot --nginx -d {{Domain}} -d {{WwwDomain}} --email {{CertbotEmail}} --agree-tos --no-eff-email
+  sudo certbot certonly --nginx -d {{Domain}} -d {{WwwDomain}} --email {{CertbotEmail}} --agree-tos --no-eff-email
   ```
 
 > **Note:** We don't care about plain HTTP and this isn't a wildcard cert, which would need separate DNS verification.
