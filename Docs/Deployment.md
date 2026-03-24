@@ -1370,6 +1370,18 @@ This keeps log files from growing forever, rotating them daily and keeping 7 day
       copytruncate
   }
   EOF
+
+  sudo tee /etc/logrotate.d/msmtp << 'EOF'
+  /var/log/msmtp.log {
+      monthly
+      missingok
+      rotate 3
+      compress
+      delaycompress
+      notifempty
+      create 640 root root
+  }
+  EOF
   ```
 
 > **Note:** NGINX ships with its own `logrotate` by default. You can customize it, but it's not necessary.
