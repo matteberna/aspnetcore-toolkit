@@ -995,7 +995,7 @@ sudo systemctl enable --now postgresql
   KEYS_PLAIN="$BACKUP_DIR/dataprotectionkeys_${TIMESTAMP}.tar.gz"
   KEYS_ENC="$KEYS_PLAIN.gpg"
 
-  trap 'rm -f "$DB_PLAIN" "$KEYS_PLAIN" "$DB_ENC" "$KEYS_ENC"; echo "Backup failed at $(date -u)" | mail -s "${PROJECT} Backup Failed" {{OpsEmail}}' ERR
+  trap 'rm -f "$DB_PLAIN" "$KEYS_PLAIN"; echo "Backup failed at $(date -u)" | mail -s "${PROJECT} Backup Failed" {{OpsEmail}}' ERR
 
   # Verify passphrase file exists
   if [[ ! -f "$PASSPHRASE_FILE" ]]; then
