@@ -1015,6 +1015,7 @@ sudo systemctl enable --now postgresql
     --output "$DB_ENC" \
     --symmetric "$DB_PLAIN"
 
+  set +o pipefail
   # Verification (decrypt + pg_restore integrity test)
   if gpg --batch --decrypt --pinentry-mode loopback \
     --passphrase-file "$PASSPHRASE_FILE" "$DB_ENC" 2>/dev/null \
@@ -1025,6 +1026,7 @@ sudo systemctl enable --now postgresql
     echo "$(date -u): ERROR - Database backup verification failed!" >&2
     exit 1
   fi
+  set -o pipefail
 
   rm -f "$DB_PLAIN"
 
