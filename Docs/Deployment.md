@@ -1408,3 +1408,88 @@ This keeps log files from growing forever, rotating them daily and keeping 7 day
   sudo logrotate --debug /etc/logrotate.conf
   ```
   Ensure newly created rotated files match the create lines you set.
+
+## Off-Site Backup (Google Drive)
+
+### Install and Configure rclone
+
+- Install rclone on the server:
+  ```bash
+  sudo apt install -y rclone
+  ```
+
+Next, you'll need to run the authorization flow on your local machine (where you have a browser).
+
+- On **Linux**, run:
+  ```bash
+  sudo apt install -y rclone
+  rclone authorize "drive"
+  ```
+
+- On **Windows**, download the appropriate .zip file from https://www.rclone.org, extract it, and run:
+  ```bash
+  .\rclone.exe authorize "drive"
+  ```
+
+- Complete the Google OAuth consent screen in your browser. When finished, rclone prints a
+JSON token block — copy the entire `{...}` blob.
+
+- On the **server**, create the remote:
+  ```bash
+  rclone config
+  ```
+
+Follow the prompts:
+- `n` (new remote)
+- Name: `gdrive`
+- Storage: `drive`
+- Leave client_id and client_secret blank (uses rclone's built-in)
+- Scope: `1` (full access)
+- Leave root_folder_id and service_account_file blank
+- Auto config: `n` (headless server)
+- Paste the token JSON from your local machine
+- Shared drive: `n`
+
+- Verify the connection:
+```bash
+  rclone lsd gdrive:
+```
+
+You should see your Drive's top-level folders.
+
+### Add Off-Site Sync to the Backup Script
+
+- Add these lines to the backup script, **after** the pruning block and **before** the
+  final "Backup complete" echo:
+```bash
+  # Off-site sync
+  REMOTE="gdrive:backups/${PROJECT}"
+  if ! rclone copy "$BACKUP_DIR" "$REMOTE" \
+    --include "*.gpg" \
+    --include "avatars_*.tar.gz" \
+    --transfers 1 \
+    --low-level-retries 3 \
+    --quiet; then
+    echo "$(date -u): WARNING - Off-site sync failed" >&2
+    echo "Local backup succeeded but off-site sync to Google Drive failed." \
+      | mail -s "${PROJECT} Off-Site Sync Failed" {{OpsEmail}}
+  fi
+
+  # Remote pruning (match local retention)
+  rclone delete "$REMOTE" --min-age 14d --quiet || true
+```
+
+> **Note:** The `if ! ...; then` pattern prevents rclone failures from triggering the ERR
+> trap — the local backup is already complete at this point, so we send a separate,
+> lower-severity alert instead.
+
+> **Note:** The `|| true` on remote pruning ensures a transient API error doesn't abort
+> the script after an otherwise successful run.
+
+### Verify
+
+- Run the backup script manually and confirm files appear on Drive:
+```bash
+  /usr/local/bin/{{ProjectLabel}}_backup.sh
+  rclone ls gdrive:backups/{{ProjectLabel}}/ | head -10
+```
