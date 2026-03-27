@@ -1711,3 +1711,10 @@ and Cloudflare decompresses to inspect/cache, then recompresses for delivery —
   ```
 
   > **Note:** This is a minor optimization, not a correctness issue. Leaving gzip enabled won't break anything.
+
+### Maintenance Page
+
+  > **⚠️Caution:** Cloudflare replaces NGINX's `502`/`503`/`504` error responses with its own branded error page by
+  > default. This means your custom `maintenance.html` will never reach visitors while the proxy is active — they'll see
+  > Cloudflare's generic "Bad Gateway" page instead. Custom Error Pages and Custom Error Rules are **only available on paid plans** (Pro and above). On the Free plan,
+  there is no dashboard option to customize or pass through origin error pages.
