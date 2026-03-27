@@ -1493,3 +1493,221 @@ You should see your Drive's top-level folders.
   /usr/local/bin/{{ProjectLabel}}_backup.sh
   rclone ls gdrive:backups/{{ProjectLabel}}/ | head -10
 ```
+
+## Cloudflare Proxy (Optional)
+
+> **❓Why:** Cloudflare's reverse proxy sits in front of NGINX and provides DDoS mitigation, edge caching, and hides
+> your origin server's IP address. The trade-off is an extra proxy hop and a dependency on Cloudflare's network.
+
+> **⚠️Caution:** Enabling the Cloudflare proxy ("orange cloud") without the changes below will break your site. The most
+> visible symptom is pages returning 429 errors for all visitors, because NGINX's rate limiter sees Cloudflare edge IPs
+> instead of real client IPs — all visitors sharing an edge node exhaust the per-IP budget almost instantly.
+
+### Prerequisites
+
+- Your domain's DNS is managed through Cloudflare (nameservers pointed to Cloudflare).
+- You've completed the [NGINX](#nginx-installation--configuration) and [Certbot](#obtain-ssl-certificates) sections.
+
+### Set SSL Mode
+
+- In the Cloudflare dashboard, go to **SSL/TLS → Overview** and set the encryption mode to **Full (Strict)**.
+
+  > **⚠️Caution:** "Flexible" mode connects to your origin over plain HTTP, but NGINX listens on port 80 only to
+  > redirect to HTTPS — this creates a redirect loop. "Full (Strict)" ensures end-to-end encryption and validates your
+  > Let's Encrypt certificate.
+
+### Prepare NGINX for Cloudflare IPs
+
+When Cloudflare proxies a request, the connection arrives from a Cloudflare edge IP. Without the `real_ip` module
+configured to trust those IPs, `$remote_addr` (and by extension `$binary_remote_addr`) is a Cloudflare address —
+which breaks rate limiting, logging, Fail2Ban, and the `X-Forwarded-For` header that NGINX passes to Kestrel.
+
+Cloudflare publishes its edge IP ranges at https://www.cloudflare.com/ips-v4/. Rather than hardcoding them, create a
+script that fetches the current list and generates an NGINX snippet:
+
+- Create the update script:
+  ```bash
+  sudo nano /usr/local/bin/update-cloudflare-ips.sh
+  ```
+
+  Paste this content:
+  ```bash
+  #!/usr/bin/env bash
+  set -euo pipefail
+
+  SNIPPET="/etc/nginx/snippets/cloudflare-realip.conf"
+  TMP=$(mktemp)
+
+  {
+    echo "# Auto-generated — do not edit manually"
+    echo "# Updated: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+    echo ""
+    curl -sf https://www.cloudflare.com/ips-v4/ | while read -r cidr; do
+      [[ -n "$cidr" ]] && echo "set_real_ip_from $cidr;"
+    done
+    echo ""
+    echo "# Loopback (local testing)"
+    echo "set_real_ip_from 127.0.0.1;"
+    echo ""
+    echo "real_ip_header    CF-Connecting-IP;"
+    echo "real_ip_recursive on;"
+  } > "$TMP"
+
+  # Sanity check: at least 10 ranges expected
+  COUNT=$(grep -c 'set_real_ip_from' "$TMP")
+  if (( COUNT < 10 )); then
+    echo "$(date -u): ERROR - Only $COUNT ranges fetched, aborting" >&2
+    rm -f "$TMP"
+    exit 1
+  fi
+
+  sudo mkdir -p /etc/nginx/snippets
+  sudo mv "$TMP" "$SNIPPET"
+  sudo chmod 644 "$SNIPPET"
+
+  # Reload NGINX only if the config is valid
+  if sudo nginx -t 2>/dev/null; then
+    sudo systemctl reload nginx
+    echo "$(date -u): Cloudflare IP snippet updated ($COUNT ranges), NGINX reloaded"
+  else
+    echo "$(date -u): WARNING - NGINX config test failed after update, not reloaded" >&2
+  fi
+  ```
+
+- Make it executable:
+  ```bash
+  sudo chmod +x /usr/local/bin/update-cloudflare-ips.sh
+  ```
+
+- Generate the initial snippet:
+  ```bash
+  sudo /usr/local/bin/update-cloudflare-ips.sh
+  cat /etc/nginx/snippets/cloudflare-realip.conf
+  ```
+
+- Schedule a weekly refresh in root's crontab:
+  ```bash
+  sudo crontab -e
+  ```
+  ```
+  15 4 * * 1 /usr/local/bin/update-cloudflare-ips.sh >> /var/log/cloudflare-ip-update.log 2>&1
+  ```
+
+- In `nginx.conf`, replace the existing `set_real_ip_from` / `real_ip_header` / `real_ip_recursive` lines inside the
+  `http` block with:
+  ```nginx
+  include /etc/nginx/snippets/cloudflare-realip.conf;
+  ```
+
+  > **Note:** `CF-Connecting-IP` is a single-value header that Cloudflare sets to the true client IP. It's cleaner
+  > than `X-Forwarded-For`, which is an appendable chain and easier to spoof through untrusted intermediaries.
+
+- Test and reload:
+  ```bash
+  sudo nginx -t && sudo systemctl reload nginx
+  ```
+
+> **Note:** No changes are needed in `Program.cs`. NGINX's `real_ip` module restores the real client IP *before*
+> proxying to Kestrel, so the `X-Forwarded-For` header that Kestrel receives still contains the real IP from a
+> loopback connection — your existing `ForwardLimit = 1` and loopback-only `KnownProxies` remain correct.
+
+### Enable the Proxy
+
+- In the Cloudflare dashboard, go to **DNS → Records**.
+- For both the `{{Domain}}` and `{{WwwDomain}}` A records, click the cloud icon to enable proxying (orange cloud).
+
+- Verify that Cloudflare is proxying (response headers should include `cf-ray`):
+  ```bash
+  curl -sI https://{{WwwDomain}} | grep -iE '^(cf-|server:)'
+  ```
+
+- Verify that NGINX access logs show real client IPs, not Cloudflare edge IPs:
+  ```bash
+  tail -20 /var/log/nginx/access.log
+  ```
+
+  > **⚠️Caution:** Do not proceed to the firewall lockdown until both checks above pass. If you lock down the firewall
+  > before the proxy is active, all traffic is blocked — the site goes down immediately.
+
+### Lock Down the Origin Firewall
+
+With Cloudflare confirmed working, restrict HTTP(S) access to Cloudflare edge IPs only so that the rest of the
+internet cannot reach ports 80/443 directly:
+
+- Remove the broad rule that was added during the NGINX setup:
+  ```bash
+  sudo ufw delete allow 'Nginx Full'
+  ```
+
+- Allow only Cloudflare edge IPs:
+  ```bash
+  curl -sf https://www.cloudflare.com/ips-v4/ | while read -r cidr; do
+    [[ -n "$cidr" ]] && sudo ufw allow from "$cidr" to any port 80,443 proto tcp
+  done
+  sudo ufw reload
+  sudo ufw status
+  ```
+
+- Verify the site still loads, then confirm from your **local machine** that the origin is not directly reachable by bypassing DNS:
+  ```bash
+  curl -sI --connect-to {{WwwDomain}}:443:{{ServerIp}}:443 https://{{WwwDomain}}
+  ```
+  This should time out or be refused.
+
+  > **Note:** Anyone who discovers your origin IP can bypass Cloudflare entirely unless you firewall them out. This
+  > step is what makes the proxy meaningful as a security layer — without it, Cloudflare is just a CDN.
+
+  > **💡Tip:** To update the firewall rules when Cloudflare's IP ranges change, delete the old rules and re-run the
+  > loop above. You can automate this alongside the NGINX snippet update, but at the cost of a more complex script —
+  > UFW doesn't support in-place rule updates, so you'd need to diff and reconcile. Given that Cloudflare's ranges
+  > change rarely, a manual refresh after the weekly NGINX update flags a change is reasonable.
+
+### Certbot Renewal
+
+HTTP-01 challenges still work because the challenge request arrives through Cloudflare's proxy to your origin on
+port 80. However, if you encounter renewal failures (e.g. Cloudflare's "Always Use HTTPS" option is enabled and
+redirects the challenge URL), switch to DNS-01 validation:
+
+- Install the Cloudflare DNS plugin:
+  ```bash
+  sudo apt install -y python3-certbot-dns-cloudflare
+  ```
+
+- Create a credentials file with a scoped API token (Zone:DNS:Edit permission):
+  ```bash
+  sudo mkdir -p /etc/letsencrypt/cloudflare
+  sudo nano /etc/letsencrypt/cloudflare/credentials.ini
+  ```
+
+  Paste this content (replacing the placeholder with your actual token):
+  ```
+  dns_cloudflare_api_token = YOUR_CLOUDFLARE_API_TOKEN
+  ```
+
+  Lock down the file:
+  ```bash
+  sudo chmod 600 /etc/letsencrypt/cloudflare/credentials.ini
+  ```
+
+- Re-issue the certificate using DNS validation:
+  ```bash
+  sudo certbot certonly \
+    --dns-cloudflare \
+    --dns-cloudflare-credentials /etc/letsencrypt/cloudflare/credentials.ini \
+    -d {{Domain}} -d {{WwwDomain}} \
+    --email {{CertbotEmail}} --agree-tos --no-eff-email
+  ```
+
+  > **Note:** This is a fallback — you only need this if HTTP-01 stops working. Don't switch preemptively.
+
+### Disable Origin gzip (Optional)
+
+Cloudflare compresses responses to clients at the edge. With NGINX also gzipping, you're compressing on the origin
+and Cloudflare decompresses to inspect/cache, then recompresses for delivery — wasting origin CPU for no benefit.
+
+- In `nginx.conf`, either remove the `gzip` block entirely or disable it:
+  ```nginx
+  gzip off;
+  ```
+
+  > **Note:** This is a minor optimization, not a correctness issue. Leaving gzip enabled won't break anything.
