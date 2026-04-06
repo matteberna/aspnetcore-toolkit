@@ -1718,3 +1718,71 @@ and Cloudflare decompresses to inspect/cache, then recompresses for delivery —
   > default. This means your custom `maintenance.html` will never reach visitors while the proxy is active — they'll see
   > Cloudflare's generic "Bad Gateway" page instead. Custom Error Pages and Custom Error Rules are **only available on paid plans** (Pro and above). On the Free plan,
   there is no dashboard option to customize or pass through origin error pages.
+
+
+## Hangfire Maintenance
+
+### The Problem
+
+Hangfire's `state`, `job`, `jobparameter`, and `counter` tables grow continuously. Services that
+fire every few seconds can generate millions of state transition records per week. PostgreSQL
+doesn't reclaim disk space from deleted rows without a `VACUUM`, so even with Hangfire's built-in
+expiration, these tables bloat over time and inflate your backups.
+
+### One-Time Cleanup
+
+- Check current table sizes:
+```bash
+  sudo -u postgres psql -d {{ProjectLabel}} -c "
+  SELECT schemaname, relname,
+         pg_size_pretty(pg_total_relation_size(schemaname || '.\"' || relname || '\"')) AS size
+  FROM pg_stat_user_tables
+  WHERE schemaname = 'hangfire'
+  ORDER BY pg_total_relation_size(schemaname || '.\"' || relname || '\"') DESC;
+  "
+```
+
+- Truncate historical data. This resets dashboard counters and removes all state history and
+  failed job records. Active and scheduled jobs are not affected:
+```bash
+  sudo -u postgres psql -d {{ProjectLabel}} -c "
+  TRUNCATE hangfire.state;
+  TRUNCATE hangfire.counter, hangfire.aggregatedcounter;
+  DELETE FROM hangfire.job WHERE statename = 'Failed';
+  "
+```
+
+- Reclaim disk space:
+```bash
+  sudo -u postgres vacuumdb --full \
+    --table='hangfire.state' \
+    --table='hangfire.job' \
+    --table='hangfire.jobparameter' \
+    --table='hangfire.counter' \
+    --table='hangfire.aggregatedcounter' \
+    {{ProjectLabel}}
+```
+
+> **Note:** `VACUUM FULL` rewrites the table and requires an exclusive lock. Hangfire jobs will
+> queue briefly during the operation but resume normally afterward.
+
+### Recurring Maintenance
+
+- Add a weekly `VACUUM` (not `FULL` — no locking) to **root's** crontab:
+```bash
+  sudo crontab -e
+```
+```
+  0 4 * * 0 sudo -u postgres vacuumdb --table='hangfire.state' --table='hangfire.job' --table='hangfire.jobparameter' {{ProjectLabel}}
+```
+
+This runs every Sunday at 4:00 AM UTC and marks dead rows as reusable, preventing gradual
+bloat between manual cleanups.
+
+> **Note:** A regular `VACUUM` keeps bloat from growing but doesn't shrink the table on disk.
+> If backup sizes start creeping up again, run the one-time `vacuumdb --full` cleanup above.
+
+> **Note:** Failed job records in `hangfire.job` are typically transient API errors (timeouts,
+> rate limits). For high-frequency services (every few seconds), tens of thousands of failures
+> over months is normal and not a sign of a deeper problem.
+ 
