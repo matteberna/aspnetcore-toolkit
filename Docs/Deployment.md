@@ -1035,22 +1035,22 @@ sudo systemctl enable --now postgresql
     tar -czf "$AVATAR_PLAIN" -C "$AVATAR_DIR" .
   fi
 
-  # DataProtection keys (encrypted)
-  tar -czf "$KEYS_PLAIN" -C "$KEY_DIR" .
-  gpg --batch --yes \
-    --pinentry-mode loopback \
-    --cipher-algo AES256 \
-    --passphrase-file "$PASSPHRASE_FILE" \
-    --output "$KEYS_ENC" \
-    --symmetric "$KEYS_PLAIN"
-  rm -f "$KEYS_PLAIN"
+  # DataProtection keys (encrypted) — only if changed since last backup
+  LATEST_KEY_BACKUP=$(ls -t "$BACKUP_DIR"/dataprotectionkeys_*.tar.gz.gpg 2>/dev/null | head -1)
+  if [[ -z "$LATEST_KEY_BACKUP" ]] || [[ $(find "$KEY_DIR" -newer "$LATEST_KEY_BACKUP" -print -quit) ]]; then
+    tar -czf "$KEYS_PLAIN" -C "$KEY_DIR" .
+    gpg --batch --yes \
+      --pinentry-mode loopback \
+      --cipher-algo AES256 \
+      --passphrase-file "$PASSPHRASE_FILE" \
+      --output "$KEYS_ENC" \
+      --symmetric "$KEYS_PLAIN"
+    rm -f "$KEYS_PLAIN"
+    echo "$(date -u): DataProtection keys backed up" >&2
+  fi
 
   # Pruning (14-day retention)
-  find "$BACKUP_DIR" -type f \( \
-    -name "${PROJECT}_*.dump.gpg" \
-    -o -name "dataprotectionkeys_*.tar.gz.gpg" \
-    \) -mtime +14 -delete
-
+  find "$BACKUP_DIR" -type f -name "${PROJECT}_*.dump.gpg" -mtime +14 -delete
   find "$BACKUP_DIR" -type f -name "avatars_*.tar.gz" -mtime +14 -delete
 
   echo "$(date -u): Backup complete" >&2
