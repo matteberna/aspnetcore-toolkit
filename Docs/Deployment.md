@@ -992,6 +992,7 @@ sudo systemctl enable --now postgresql
   DB_PLAIN="$BACKUP_DIR/${PROJECT}_${TIMESTAMP}.dump"
   DB_ENC="$DB_PLAIN.gpg"
   AVATAR_PLAIN="$BACKUP_DIR/avatars_${TIMESTAMP}.tar.gz"
+  AVATAR_PLAIN="$BACKUP_DIR/avatars.tar.gz"
   KEYS_PLAIN="$BACKUP_DIR/dataprotectionkeys_${TIMESTAMP}.tar.gz"
   KEYS_ENC="$KEYS_PLAIN.gpg"
 
@@ -1051,7 +1052,6 @@ sudo systemctl enable --now postgresql
 
   # Pruning (14-day retention)
   find "$BACKUP_DIR" -type f -name "${PROJECT}_*.dump.gpg" -mtime +14 -delete
-  find "$BACKUP_DIR" -type f -name "avatars_*.tar.gz" -mtime +14 -delete
 
   echo "$(date -u): Backup complete" >&2
   EOF
