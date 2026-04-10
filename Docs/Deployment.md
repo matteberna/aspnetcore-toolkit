@@ -991,7 +991,6 @@ sudo systemctl enable --now postgresql
   TIMESTAMP=$(date -u +%Y-%m-%dT%H%M)
   DB_PLAIN="$BACKUP_DIR/${PROJECT}_${TIMESTAMP}.dump"
   DB_ENC="$DB_PLAIN.gpg"
-  AVATAR_PLAIN="$BACKUP_DIR/avatars_${TIMESTAMP}.tar.gz"
   AVATAR_PLAIN="$BACKUP_DIR/avatars.tar.gz"
   KEYS_PLAIN="$BACKUP_DIR/dataprotectionkeys_${TIMESTAMP}.tar.gz"
   KEYS_ENC="$KEYS_PLAIN.gpg"
