@@ -935,12 +935,12 @@ sudo systemctl enable --now postgresql
   from {{SmtpEmail}}
   user {{SesSmtpUser}}
   password {{SesSmtpPassword}}
+  set_from_header on
 
-  account default: default
   EOF
 
-  sudo chown root:root /etc/msmtprc
-  sudo chmod 600 /etc/msmtprc
+  sudo chown root:web /etc/msmtprc
+  sudo chmod 640 /etc/msmtprc
   ```
 
 - Smoke test:
