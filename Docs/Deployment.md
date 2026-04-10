@@ -926,7 +926,7 @@ sudo systemctl enable --now postgresql
   auth           on
   tls            on
   tls_trust_file /etc/ssl/certs/ca-certificates.crt
-  logfile        /var/log/msmtp.log
+  syslog         on
 
   # System mail account (used by root + cron for backup alerts, etc.)
   account default
