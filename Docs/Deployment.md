@@ -1041,7 +1041,7 @@ sudo systemctl enable --now postgresql
   fi
 
   # DataProtection keys (encrypted) — only if changed since last backup
-  LATEST_KEY_BACKUP=$(ls -t "$BACKUP_DIR"/dataprotectionkeys_*.tar.gz.gpg 2>/dev/null | head -1)
+  LATEST_KEY_BACKUP=$(ls -t "$BACKUP_DIR"/dataprotectionkeys_*.tar.gz.gpg 2>/dev/null | head -1 || true)
   if [[ -z "$LATEST_KEY_BACKUP" ]] || [[ $(find "$KEY_DIR" -newer "$LATEST_KEY_BACKUP" -print -quit) ]]; then
     tar -czf "$KEYS_PLAIN" -C "$KEY_DIR" .
     gpg --batch --yes \
