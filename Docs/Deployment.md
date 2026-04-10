@@ -1013,7 +1013,7 @@ sudo systemctl enable --now postgresql
   chmod 750 "$BACKUP_DIR"
 
   # Database dump (encrypted)
-  sudo -u postgres /usr/bin/pg_dump "$PROJECT" --format=custom --no-owner --no-privileges > "$DB_PLAIN"
+  sudo -u postgres /usr/bin/pg_dump "$PROJECT" --format=custom --compress=zstd --no-owner --no-privileges > "$DB_PLAIN"
   gpg --batch --yes \
     --pinentry-mode loopback \
     --cipher-algo AES256 \
