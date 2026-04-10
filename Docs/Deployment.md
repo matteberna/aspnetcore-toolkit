@@ -1076,7 +1076,7 @@ sudo systemctl enable --now postgresql
   [Initial Server Setup](#create-the-deploy-user) section (`deploy ALL=(postgres) NOPASSWD: /usr/bin/pg_dump`).
   ```
   0 0,12 * * * /usr/local/bin/{{ProjectLabel}}_backup.sh >> /home/deploy/backups/backup.log 2>&1
-  0 8 * * * df -h | grep -E '^/dev/' | awk '$5+0 > 80 {print "Disk usage warning: " $0}' | mail -s "Disk Space Alert" {{OpsEmail}}
+  0 8 * * * df -h | grep -E '^/dev/' | awk '$5+0 > 80 {print "Disk usage warning: " $0}' | while read line; do printf "From: {{SmtpEmail}}\nTo: {{OpsEmail}}\nSubject: Disk Space Alert\n\n%s\n" "$line" | msmtp {{OpsEmail}}; done
   ```
 - Save and exit; cron will pick up the new schedule immediately.
 
