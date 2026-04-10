@@ -995,8 +995,13 @@ sudo systemctl enable --now postgresql
   AVATAR_PLAIN="$BACKUP_DIR/avatars.tar.gz"
   KEYS_PLAIN="$BACKUP_DIR/dataprotectionkeys_${TIMESTAMP}.tar.gz"
   KEYS_ENC="$KEYS_PLAIN.gpg"
+  
+  alert() {
+    printf "From: {{SmtpEmail}}\nTo: {{OpsEmail}}\nSubject: %s\n\n%s\n" "$1" "$2" \
+      | msmtp {{OpsEmail}}
+  }
 
-  trap 'rm -f "$DB_PLAIN" "$KEYS_PLAIN"; echo "Backup failed at $(date -u)" | mail -s "${PROJECT} Backup Failed" {{OpsEmail}}' ERR
+  trap 'rm -f "$DB_PLAIN" "$KEYS_PLAIN"; alert "${PROJECT} Backup Failed" "Backup failed at $(date -u)"' ERR
 
   # Verify passphrase file exists
   if [[ ! -f "$PASSPHRASE_FILE" ]]; then
@@ -1471,8 +1476,7 @@ You should see your Drive's top-level folders.
     --low-level-retries 3 \
     --quiet; then
     echo "$(date -u): WARNING - Off-site sync failed" >&2
-    echo "Local backup succeeded but off-site sync to Google Drive failed." \
-      | mail -s "${PROJECT} Off-Site Sync Failed" {{OpsEmail}}
+    alert "${PROJECT} Off-Site Sync Failed" "Local backup succeeded but off-site sync to Google Drive failed."
   fi
 
   # Remote pruning (match local retention)
