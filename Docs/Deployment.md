@@ -1470,7 +1470,7 @@ You should see your Drive's top-level folders.
   REMOTE="gdrive:Backups/${PROJECT}"
   if ! rclone copy "$BACKUP_DIR" "$REMOTE" \
     --include "*.gpg" \
-    --include "avatars_*.tar.gz" \
+    --include "avatars.tar.gz" \
     --transfers 1 \
     --low-level-retries 3 \
     --quiet; then
