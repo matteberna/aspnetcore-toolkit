@@ -1467,7 +1467,7 @@ You should see your Drive's top-level folders.
   final "Backup complete" echo:
 ```bash
   # Off-site sync
-  REMOTE="gdrive:backups/${PROJECT}"
+  REMOTE="gdrive:Backups/${PROJECT}"
   if ! rclone copy "$BACKUP_DIR" "$REMOTE" \
     --include "*.gpg" \
     --include "avatars_*.tar.gz" \
@@ -1494,7 +1494,7 @@ You should see your Drive's top-level folders.
 - Run the backup script manually and confirm files appear on Drive:
 ```bash
   /usr/local/bin/{{ProjectLabel}}_backup.sh
-  rclone ls gdrive:backups/{{ProjectLabel}}/ | head -10
+  rclone ls gdrive:Backups/{{ProjectLabel}}/ | head -10
 ```
 
 ## Cloudflare Proxy (Optional)
