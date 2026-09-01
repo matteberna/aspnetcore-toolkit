@@ -646,6 +646,13 @@ sudo systemctl enable --now postgresql
   > **Note:** Strict-Transport-Security is a permanent commitment to HTTPS for your entire domain and all its subdomains.
 
   ```nginx
+  # `localhost` resolves to both 127.0.0.1 and ::1, making this an implicit two-server group that
+  # ejects slow entries and 502s. `max_fails=0` disables ejection; there is one upstream anyway.
+  upstream {{ProjectLabel}}_app {
+      server 127.0.0.1:5000;
+      keepalive 32;
+  }
+
   # Drop requests that don't match our domain (IP scans, random hostnames)
   server {
       listen 80 default_server;
@@ -714,7 +721,7 @@ sudo systemctl enable --now postgresql
       location / {
           limit_req zone=one burst=200 nodelay;
           limit_req_status 429;
-          proxy_pass http://localhost:5000;
+          proxy_pass http://{{ProjectLabel}}_app;
           proxy_http_version 1.1;
           proxy_set_header Upgrade $http_upgrade;
           proxy_set_header Connection $connection_upgrade;
@@ -722,7 +729,7 @@ sudo systemctl enable --now postgresql
           proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
           proxy_set_header X-Forwarded-Proto https;
           proxy_buffer_size 4k;
-          proxy_buffers 4 32k;
+          proxy_buffers 16 32k;
           proxy_busy_buffers_size 64k;
           proxy_connect_timeout 10s;
           proxy_send_timeout 30s;
@@ -796,7 +803,7 @@ sudo systemctl enable --now postgresql
   
   map $http_upgrade $connection_upgrade {
       default   upgrade;
-      ''        close;
+      ''        "";
   }
 
   limit_req_zone $binary_remote_addr zone=one:10m rate=100r/s;
@@ -1282,7 +1289,7 @@ sudo systemctl enable --now postgresql
   WorkingDirectory=/var/www/{{ProjectLabel}}
   ExecStart=/var/www/{{ProjectLabel}}/{{ProjectName}}
   ExecReload=/bin/kill -s HUP $MAINPID
-  Environment=ASPNETCORE_URLS=http://localhost:5000
+  Environment=ASPNETCORE_URLS=http://127.0.0.1:5000
   Environment=ASPNETCORE_ENVIRONMENT=Production
   Environment=DOTNET_PRINT_TELEMETRY_MESSAGE=false
   KillMode=mixed
@@ -1339,7 +1346,7 @@ sudo systemctl enable --now postgresql
 
 - Smoke-test that Kestrel is actually serving requests (expect `200` or `302`):
   ```bash
-  curl -s -o /dev/null -w "%{http_code}" http://localhost:5000
+  curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:5000
   ```
 
 - Confirm background jobs are running by visiting `https://{{WwwDomain}}/hangfire` and checking that the recurring jobs list is populated and the first executions are completing successfully.
