@@ -365,6 +365,14 @@
 
   The output will appear in `bin/Release/net*/linux-*/publish/`.
 
+### Install Native Runtime Dependencies
+
+- If the application uses **SkiaSharp**, install `libfontconfig1`, which is not present on a minimal Debian install:
+  ```bash
+  sudo apt install -y libfontconfig1
+  sudo fc-cache -f
+  ```
+
 ### Configure Web Directory & Permissions
 
 - Create a shared **web** group and add both users:
