@@ -188,7 +188,7 @@
 
   Make sure these lines are present and uncommented:
   ```
-  Unattended-Upgrade::Automatic-Reboot "true";
+  Unattended-Upgrade::Automatic-Reboot "false";
   Unattended-Upgrade::Automatic-Reboot-Time "04:30";
   Unattended-Upgrade::Remove-Unused-Dependencies "true";
   Unattended-Upgrade::Mail "{{OpsEmail}}";
